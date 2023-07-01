@@ -152,6 +152,7 @@ def test_pca_noise_estimate():
     bvecs2 = np.concatenate([np.zeros((1, 3)), np.eye(3)])
     gtab2 = dpg.gradient_table(bvals2, bvecs2)
 
+    sigma = 1
     for patch_radius in [1, 2]:
         for gtab in [gtab1, gtab2]:
             for dtype in [np.int16, np.float64]:
@@ -161,7 +162,6 @@ def test_pca_noise_estimate():
                         # High signal for no bias correction
                         signal = signal * 100
 
-                    sigma = 1
                     noise1 = np.random.normal(0, sigma, size=signal.shape)
                     noise2 = np.random.normal(0, sigma, size=signal.shape)
 

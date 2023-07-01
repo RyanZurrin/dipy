@@ -43,7 +43,7 @@ def _roll_evals(evals, axis=-1):
 
     """
     if evals.shape[-1] != 3:
-        msg = "Expecting 3 eigenvalues, got {}".format(evals.shape[-1])
+        msg = f"Expecting 3 eigenvalues, got {evals.shape[-1]}"
         raise ValueError(msg)
 
     evals = np.rollaxis(evals, axis)
@@ -81,12 +81,11 @@ def fractional_anisotropy(evals, axis=-1):
     # Make sure not to get nans
     all_zero = (evals == 0).all(axis=0)
     ev1, ev2, ev3 = evals
-    fa = np.sqrt(0.5 * ((ev1 - ev2) ** 2 +
-                        (ev2 - ev3) ** 2 +
-                        (ev3 - ev1) ** 2) /
-                 ((evals * evals).sum(0) + all_zero))
-
-    return fa
+    return np.sqrt(
+        0.5
+        * ((ev1 - ev2) ** 2 + (ev2 - ev3) ** 2 + (ev3 - ev1) ** 2)
+        / ((evals * evals).sum(0) + all_zero)
+    )
 
 
 def geodesic_anisotropy(evals, axis=-1):
@@ -165,9 +164,7 @@ def geodesic_anisotropy(evals, axis=-1):
     log2[idx] = np.log(ev2[idx] / detD[idx])
     log3[idx] = np.log(ev3[idx] / detD[idx])
 
-    ga = np.sqrt(log1 ** 2 + log2 ** 2 + log3 ** 2)
-
-    return ga
+    return np.sqrt(log1 ** 2 + log2 ** 2 + log3 ** 2)
 
 
 def mean_diffusivity(evals, axis=-1):
@@ -420,8 +417,7 @@ def deviatoric(q_form):
         Images", Magnetic Resonance in Medicine, vol. 55, no. 1, pp. 136-146,
         2006.
     """
-    A_squiggle = q_form - isotropic(q_form)
-    return A_squiggle
+    return q_form - isotropic(q_form)
 
 
 def norm(q_form):
@@ -742,7 +738,7 @@ class TensorModel(ReconstModel):
             try:
                 fit_method = common_fit_methods[fit_method]
             except KeyError:
-                e_s = '"' + str(fit_method) + '" is not a known fit '
+                e_s = f'"{str(fit_method)}" is not a known fit '
                 e_s += 'method, the fit method should either be a '
                 e_s += 'function or one of the common fit methods'
                 raise ValueError(e_s)
@@ -753,8 +749,7 @@ class TensorModel(ReconstModel):
         self.kwargs = kwargs
         self.min_signal = self.kwargs.pop('min_signal', None)
         if self.min_signal is not None and self.min_signal <= 0:
-            e_s = "The `min_signal` key-word argument needs to be strictly"
-            e_s += " positive."
+            e_s = "The `min_signal` key-word argument needs to be strictly" + " positive."
             raise ValueError(e_s)
 
     def fit(self, data, mask=None):
@@ -1200,8 +1195,8 @@ class TensorFit(object):
         """
         if S0 is None:
             S0 = self.model_S0
-            if S0 is None:  # if we didn't input or estimate S0 just use 1
-                S0 = 1.
+        if S0 is None:  # if we didn't input or estimate S0 just use 1
+            S0 = 1.
         shape = self.model_params.shape[:-1]
         size = np.prod(shape)
         if step is None:
@@ -1214,10 +1209,7 @@ class TensorFit(object):
         if isinstance(S0, np.ndarray):
             S0 = S0.ravel()
         for i in range(0, size, step):
-            if isinstance(S0, np.ndarray):
-                this_S0 = S0[i:i + step]
-            else:
-                this_S0 = S0
+            this_S0 = S0[i:i + step] if isinstance(S0, np.ndarray) else S0
             predict[i:i + step] = tensor_prediction(params[i:i + step], gtab,
                                                     S0=this_S0)
         return predict.reshape(shape + (gtab.bvals.shape[0], ))
@@ -1540,8 +1532,7 @@ def _nlls_err_func(tensor, design_matrix, data, weighting=None,
     # suggested by Chang et al.) we will use it:
     if weighting == 'sigma':
         if sigma is None:
-            e_s = "Must provide sigma value as input to use this weighting"
-            e_s += " method"
+            e_s = "Must provide sigma value as input to use this weighting" + " method"
             raise ValueError(e_s)
         w = 1 / (sigma**2)
 
@@ -1729,11 +1720,10 @@ def nlls_fit_tensor(design_matrix, data, weighting=None,
             params[vox, 12:] = this_param[6:-1] / md2
 
     params.shape = data.shape[:-1] + (npa,)
-    if return_S0_hat:
-        model_S0.shape = data.shape[:-1] + (1,)
-        return params, model_S0
-    else:
+    if not return_S0_hat:
         return params
+    model_S0.shape = data.shape[:-1] + (1,)
+    return params, model_S0
 
 
 def restore_fit_tensor(design_matrix, data, sigma=None, jac=True,
@@ -1849,11 +1839,7 @@ def restore_fit_tensor(design_matrix, data, sigma=None, jac=True,
                 non_outlier_idx = np.where(np.abs(residuals) <= 3 * sigma)
                 clean_design = design_matrix[non_outlier_idx]
                 clean_sig = flat_data[vox][non_outlier_idx]
-                if np.iterable(sigma):
-                    this_sigma = sigma[non_outlier_idx]
-                else:
-                    this_sigma = sigma
-
+                this_sigma = sigma[non_outlier_idx] if np.iterable(sigma) else sigma
                 if jac:
                     this_param, status = opt.leastsq(_nlls_err_func,
                                                      start_params,
@@ -1893,11 +1879,10 @@ def restore_fit_tensor(design_matrix, data, sigma=None, jac=True,
             params[vox, 12:] = this_param[6:-1] / md2
 
     params.shape = data.shape[:-1] + (npa,)
-    if return_S0_hat:
-        model_S0.shape = data.shape[:-1] + (1,)
-        return params, model_S0
-    else:
+    if not return_S0_hat:
         return params
+    model_S0.shape = data.shape[:-1] + (1,)
+    return params, model_S0
 
 
 _lt_indices = np.array([[0, 1, 3],
@@ -1952,11 +1937,10 @@ def lower_triangular(tensor, b0=None):
         raise ValueError("Diffusion tensors should be (..., 3, 3)")
     if b0 is None:
         return tensor[..., _lt_rows, _lt_cols]
-    else:
-        D = np.empty(tensor.shape[:-2] + (7,), dtype=tensor.dtype)
-        D[..., 6] = -np.log(b0)
-        D[..., :6] = tensor[..., _lt_rows, _lt_cols]
-        return D
+    D = np.empty(tensor.shape[:-2] + (7,), dtype=tensor.dtype)
+    D[..., 6] = -np.log(b0)
+    D[..., :6] = tensor[..., _lt_rows, _lt_cols]
+    return D
 
 
 def decompose_tensor(tensor, min_diffusivity=0):
@@ -2039,7 +2023,6 @@ def design_matrix(gtab, dtype=None):
         B[:, 3] = gtab.bvecs[:, 0] * gtab.bvecs[:, 2] * 2. * gtab.bvals   # Bxz
         B[:, 4] = gtab.bvecs[:, 1] * gtab.bvecs[:, 2] * 2. * gtab.bvals   # Byz
         B[:, 5] = gtab.bvecs[:, 2] * gtab.bvecs[:, 2] * 1. * gtab.bvals   # Bzz
-        B[:, 6] = np.ones(gtab.gradients.shape[0])
     else:
         B = np.zeros((gtab.gradients.shape[0], 7))
         B[:, 0] = gtab.btens[:, 0, 0]   # Bxx
@@ -2048,8 +2031,7 @@ def design_matrix(gtab, dtype=None):
         B[:, 3] = gtab.btens[:, 0, 2] * 2  # Bxz
         B[:, 4] = gtab.btens[:, 1, 2] * 2  # Byz
         B[:, 5] = gtab.btens[:, 2, 2]   # Bzz
-        B[:, 6] = np.ones(gtab.gradients.shape[0])
-
+    B[:, 6] = np.ones(gtab.gradients.shape[0])
     return -B
 
 

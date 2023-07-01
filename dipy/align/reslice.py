@@ -97,8 +97,7 @@ def reslice(data, affine, zooms, new_zooms, order=1, mode='constant', cval=0,
             else:
                 params = []
                 for i in range(data.shape[-1]):
-                    _kwargs = {'input': data[..., i]}
-                    _kwargs.update(kwargs)
+                    _kwargs = {'input': data[..., i]} | kwargs
                     params.append(_kwargs)
 
                 pool = Pool(num_processes)

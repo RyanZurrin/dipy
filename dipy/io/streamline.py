@@ -188,10 +188,10 @@ def load_generator(ttype):
         Function (load_tractogram) that handle only one file format
     """
     def f_gen(filename, reference, to_space=Space.RASMM,
-              to_origin=Origin.NIFTI, bbox_valid_check=True,
-              trk_header_check=True):
+                  to_origin=Origin.NIFTI, bbox_valid_check=True,
+                  trk_header_check=True):
         _, extension = os.path.splitext(filename)
-        if not extension == ttype:
+        if extension != ttype:
             msg = f"This function can only load {ttype} files, "
             msg += "for a more general purpose, use load_tractogram instead."
             raise ValueError(msg)
@@ -223,7 +223,7 @@ def save_generator(ttype):
     """
     def f_gen(sft, filename, bbox_valid_check=True):
         _, extension = os.path.splitext(filename)
-        if not extension == ttype:
+        if extension != ttype:
             msg = f"This function can only save {ttype} file, "
             msg += "for more general cases, use save_tractogram instead."
             raise ValueError(msg)

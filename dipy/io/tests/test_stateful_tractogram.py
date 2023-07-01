@@ -15,11 +15,8 @@ from dipy.io.streamline import load_tractogram, save_tractogram
 from dipy.utils.optpkg import optional_package
 fury, have_fury, setup_module = optional_package('fury')
 
-filepath_dix = {}
 files, folder = fetch_gold_standard_io()
-for filename in files:
-    filepath_dix[filename] = os.path.join(folder, filename)
-
+filepath_dix = {filename: os.path.join(folder, filename) for filename in files}
 with open(filepath_dix['points_data.json']) as json_file:
     points_data = dict(json.load(json_file))
 
@@ -396,7 +393,7 @@ def replace_streamlines():
 def subsample_streamlines():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'],
                           to_space=Space.RASMM)
-    tmp_streamlines = sft.get_streamlines_copy()[0:8]
+    tmp_streamlines = sft.get_streamlines_copy()[:8]
 
     try:
         sft.streamlines = tmp_streamlines
@@ -415,8 +412,7 @@ def reassign_both_data_sep_to_empty():
     except (TypeError, ValueError):
         return False
 
-    return sft.data_per_point == {} and \
-        sft.data_per_streamline == {}
+    return not sft.data_per_point and not sft.data_per_streamline
 
 
 def reassign_both_data_sep():
@@ -530,7 +526,7 @@ def out_of_grid(value):
 
 def data_per_point_consistency_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     sft_first_half.data_per_point = {}
@@ -543,7 +539,7 @@ def data_per_point_consistency_addition():
 
 def data_per_streamline_consistency_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     sft_first_half.data_per_streamline = {}
@@ -556,7 +552,7 @@ def data_per_streamline_consistency_addition():
 
 def space_consistency_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     sft_first_half.to_vox()
@@ -569,7 +565,7 @@ def space_consistency_addition():
 
 def origin_consistency_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     sft_first_half.to_corner()
@@ -671,7 +667,7 @@ def test_advanced_slicing():
 
 def test_basic_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     concatenate_sft = sft_first_half + sft_last_half
@@ -681,7 +677,7 @@ def test_basic_addition():
 
 def test_space_side_effect_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     concatenate_sft = sft_first_half + sft_last_half
@@ -700,7 +696,7 @@ def test_space_side_effect_addition():
 
 def test_origin_side_effect_addition():
     sft = load_tractogram(filepath_dix['gs.trk'], filepath_dix['gs.nii'])
-    sft_first_half = sft[0:7]
+    sft_first_half = sft[:7]
     sft_last_half = sft[7:13]
 
     concatenate_sft = sft_first_half + sft_last_half
@@ -828,8 +824,8 @@ def test_invalid_streamlines():
     assert expected_idx_to_keep == obtained_idx_to_keep
     assert_(
         len(sft) == src_strml_count,
-        msg='An unshifted gold standard should have {} invalid streamlines'.
-            format(src_strml_count - src_strml_count))
+        msg='An unshifted gold standard should have 0 invalid streamlines',
+    )
 
     # Change the dimensions so that a few streamlines become invalid
     sft.dimensions[2] = 5
@@ -845,8 +841,8 @@ def test_invalid_streamlines():
     assert obtained_idx_to_keep == expected_idx_to_keep
     assert_(
         len(sft) == expected_len_sft,
-        msg='The shifted gold standard should have {} invalid streamlines'.
-            format(src_strml_count - expected_len_sft))
+        msg=f'The shifted gold standard should have {src_strml_count - expected_len_sft} invalid streamlines',
+    )
 
 
 def test_invalid_streamlines_epsilon():
@@ -879,11 +875,7 @@ def test_invalid_streamlines_epsilon():
     assert obtained_idx_to_keep == expected_idx_to_keep
     assert_(
         len(sft) == expected_len_sft,
-        msg='Too big of an epsilon ({} mm) should have removed {} streamlines '
-            '({} corners)'.format(
-            epsilon,
-            expected_removed_strml_count,
-            expected_removed_strml_count)
+        msg=f'Too big of an epsilon ({epsilon} mm) should have removed {expected_removed_strml_count} streamlines ({expected_removed_strml_count} corners)',
     )
 
 

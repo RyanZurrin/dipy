@@ -345,17 +345,18 @@ class StreamlineLinearRegistration(object):
         map : StreamlineRegistrationMap
 
         """
-        msg = 'need to have the same number of points. Use '
-        msg += 'set_number_of_points from dipy.tracking.streamline'
-
+        msg = (
+            'need to have the same number of points. Use '
+            + 'set_number_of_points from dipy.tracking.streamline'
+        )
         if not np.all(np.array(list(map(len, static))) == static[0].shape[0]):
-            raise ValueError('Static streamlines ' + msg)
+            raise ValueError(f'Static streamlines {msg}')
 
         if not np.all(np.array(list(map(len, moving))) == moving[0].shape[0]):
-            raise ValueError('Moving streamlines ' + msg)
+            raise ValueError(f'Moving streamlines {msg}')
 
         if not np.all(np.array(list(map(len, moving))) == static[0].shape[0]):
-            raise ValueError('Static and moving streamlines ' + msg)
+            raise ValueError(f'Static and moving streamlines {msg}')
 
         if mat is None:
             static_centered, static_shift = center_streamlines(static)
@@ -405,12 +406,12 @@ class StreamlineLinearRegistration(object):
         mat_history = []
 
         if opt.evolution is not None:
-            for vecs in opt.evolution:
-                mat_history.append(
-                    compose_transformations(moving_mat,
-                                            compose_matrix44(vecs),
-                                            static_mat))
-
+            mat_history.extend(
+                compose_transformations(
+                    moving_mat, compose_matrix44(vecs), static_mat
+                )
+                for vecs in opt.evolution
+            )
         srm = StreamlineRegistrationMap(mat, opt.xopt, opt.fopt,
                                         mat_history, opt.nfev, opt.nit)
         del opt
@@ -447,19 +448,17 @@ class StreamlineLinearRegistration(object):
 
         if isinstance(x0, int):
             if x0 not in [3, 6, 7, 9, 12]:
-                msg = 'Only 3, 6, 7, 9 and 12 are accepted as integers'
-                raise ValueError(msg)
-            else:
-                if x0 == 3:
-                    return np.zeros(3)
-                if x0 == 6:
-                    return np.zeros(6)
-                if x0 == 7:
-                    return np.array([0, 0, 0, 0, 0, 0, 1.])
-                if x0 == 9:
-                    return np.array([0, 0, 0, 0, 0, 0, 1., 1., 1.])
-                if x0 == 12:
-                    return np.array([0, 0, 0, 0, 0, 0, 1., 1., 1., 0, 0, 0])
+                raise ValueError('Only 3, 6, 7, 9 and 12 are accepted as integers')
+            if x0 == 3:
+                return np.zeros(3)
+            if x0 == 6:
+                return np.zeros(6)
+            if x0 == 7:
+                return np.array([0, 0, 0, 0, 0, 0, 1.])
+            if x0 == 9:
+                return np.array([0, 0, 0, 0, 0, 0, 1., 1., 1.])
+            if x0 == 12:
+                return np.array([0, 0, 0, 0, 0, 0, 1., 1., 1., 0, 0, 0])
 
         raise ValueError('Wrong input')
 
@@ -765,8 +764,7 @@ def progressive_slr(static, moving, metric, x0, bounds, method='L-BFGS-B',
     if verbose:
         logger.info('Progressive Registration is Enabled')
 
-    if x0 == 'translation' or x0 == 'rigid' or \
-       x0 == 'similarity' or x0 == 'scaling' or x0 == 'affine':
+    if x0 in ['translation', 'rigid', 'similarity', 'scaling', 'affine']:
         if verbose:
             logger.info(' Translation  (3 parameters)...')
         slr_t = StreamlineLinearRegistration(metric=metric,
@@ -776,8 +774,7 @@ def progressive_slr(static, moving, metric, x0, bounds, method='L-BFGS-B',
 
         slm_t = slr_t.optimize(static, moving)
 
-    if x0 == 'rigid' or x0 == 'similarity' or \
-       x0 == 'scaling' or x0 == 'affine':
+    if x0 in ['rigid', 'similarity', 'scaling', 'affine']:
 
         x_translation = slm_t.xopt
         x = np.zeros(6)
@@ -790,7 +787,7 @@ def progressive_slr(static, moving, metric, x0, bounds, method='L-BFGS-B',
                                              method=method)
         slm_r = slr_r.optimize(static, moving)
 
-    if x0 == 'similarity' or x0 == 'scaling' or x0 == 'affine':
+    if x0 in ['similarity', 'scaling', 'affine']:
 
         x_rigid = slm_r.xopt
         x = np.zeros(7)
@@ -804,7 +801,7 @@ def progressive_slr(static, moving, metric, x0, bounds, method='L-BFGS-B',
                                              method=method)
         slm_s = slr_s.optimize(static, moving)
 
-    if x0 == 'scaling' or x0 == 'affine':
+    if x0 in ['scaling', 'affine']:
 
         x_similarity = slm_s.xopt
         x = np.zeros(9)
@@ -941,10 +938,7 @@ def slr_with_qbx(static, moving,
 
     def check_range(streamline, gt=greater_than, lt=less_than):
 
-        if (length(streamline) > gt) & (length(streamline) < lt):
-            return True
-        else:
-            return False
+        return bool((length(streamline) > gt) & (length(streamline) < lt))
 
     streamlines1 = Streamlines(static[np.array([check_range(s)
                                                 for s in static])])
@@ -1056,15 +1050,16 @@ def compose_matrix44(t, dtype=np.double):
 
     MAX_DIST = 1e10
     scale, shear, angles, translate = (None, ) * 4
-    translate = _threshold(t[0:3], MAX_DIST)
+    translate = _threshold(t[:3], MAX_DIST)
     if size in [6, 7, 9, 12]:
         angles = np.deg2rad(t[3:6])
-    if size == 7:
-        scale = np.array((t[6],) * 3)
-    if size in [9, 12]:
-        scale = t[6: 9]
     if size == 12:
+        scale = t[6: 9]
         shear = t[9: 12]
+    elif size == 7:
+        scale = np.array((t[6],) * 3)
+    elif size == 9:
+        scale = t[6: 9]
     return compose_matrix(scale=scale, shear=shear,
                           angles=angles,
                           translate=translate)

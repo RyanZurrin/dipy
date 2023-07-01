@@ -13,17 +13,11 @@ __all__ = ['Sphere', 'HemiSphere', 'faces_from_sphere_vertices',
 
 
 def _all_specified(*args):
-    for a in args:
-        if a is None:
-            return False
-    return True
+    return all(a is not None for a in args)
 
 
 def _some_specified(*args):
-    for a in args:
-        if a is not None:
-            return True
-    return False
+    return any(a is not None for a in args)
 
 
 def faces_from_sphere_vertices(vertices):
@@ -43,10 +37,7 @@ def faces_from_sphere_vertices(vertices):
     """
     from scipy.spatial import Delaunay
     faces = Delaunay(vertices).convex_hull
-    if len(vertices) < 2**16:
-        return np.asarray(faces, np.uint16)
-    else:
-        return faces
+    return np.asarray(faces, np.uint16) if len(vertices) < 2**16 else faces
 
 
 def unique_edges(faces, return_mapping=False):
@@ -79,11 +70,10 @@ def unique_edges(faces, return_mapping=False):
     """
     faces = np.asarray(faces)
     edges = np.concatenate([faces[:, 0:2], faces[:, 1:3], faces[:, ::2]])
-    if return_mapping:
-        ue, inverse = unique_sets(edges, return_inverse=True)
-        return ue, inverse.reshape((3, -1)).T
-    else:
+    if not return_mapping:
         return unique_sets(edges)
+    ue, inverse = unique_sets(edges, return_inverse=True)
+    return ue, inverse.reshape((3, -1)).T
 
 
 def unique_sets(sets, return_inverse=False):
@@ -154,11 +144,11 @@ class Sphere(object):
                  faces=None, edges=None):
 
         all_specified = _all_specified(x, y, z) + _all_specified(xyz) + \
-                        _all_specified(theta, phi)
+                            _all_specified(theta, phi)
         one_complete = (_some_specified(x, y, z) + _some_specified(xyz) +
                         _some_specified(theta, phi))
 
-        if not (all_specified == 1 and one_complete == 1):
+        if all_specified != 1 or one_complete != 1:
             raise ValueError("Sphere must be constructed using either "
                              "(x,y,z), (theta, phi) or xyz.")
 
@@ -204,8 +194,7 @@ class Sphere(object):
 
     @auto_attr
     def faces(self):
-        faces = faces_from_sphere_vertices(self.vertices)
-        return faces
+        return faces_from_sphere_vertices(self.vertices)
 
     @auto_attr
     def edges(self):

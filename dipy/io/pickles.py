@@ -31,9 +31,8 @@ def save_pickle(fname, dix):
     dipy.io.pickles.load_pickle
 
     """
-    out = open(fname, 'wb')
-    pickle.dump(dix, out, protocol=pickle.HIGHEST_PROTOCOL)
-    out.close()
+    with open(fname, 'wb') as out:
+        pickle.dump(dix, out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def load_pickle(fname):
@@ -54,7 +53,6 @@ def load_pickle(fname):
     dipy.io.pickles.save_pickle
 
     """
-    inp = open(fname, 'rb')
-    dix = pickle.load(inp)
-    inp.close()
+    with open(fname, 'rb') as inp:
+        dix = pickle.load(inp)
     return dix

@@ -101,10 +101,7 @@ def iterate_residual_field_ssd_3d(delta_field, sigmasq_field, grad, target,
                     dfield[s, r, c] = y / nn
                 elif sigmasq < 1e-9:
                     nrm2 = np.sum(g**2)
-                    if nrm2 < 1e-9:
-                        dfield[s, r, c, :] = 0
-                    else:
-                        dfield[s, r, c, :] = b[s, r, c] / nrm2
+                    dfield[s, r, c, :] = 0 if nrm2 < 1e-9 else b[s, r, c] / nrm2
                 else:
                     tau = sigmasq * lambda_param * nn
                     y = b[s, r, c] + sigmasq * lambda_param * y
@@ -190,7 +187,7 @@ def test_compute_residual_displacement_field_ssd_2d():
     target = None
     rtol = 1e-9
     atol = 1e-4
-    for it in range(2):
+    for _ in range(2):
         # Sum of differences with the neighbors
         s = np.zeros_like(d, dtype=np.float64)
         s[:, :-1] += d[:, :-1] - d[:, 1:]  # right
@@ -331,7 +328,7 @@ def test_compute_residual_displacement_field_ssd_3d():
     target = None
     rtol = 1e-9
     atol = 1e-4
-    for it in range(2):
+    for _ in range(2):
         # Sum of differences with the neighbors
         s = np.zeros_like(d, dtype=np.float64)
         s[:, :, :-1] += d[:, :, :-1] - d[:, :, 1:]  # right
@@ -409,13 +406,9 @@ def test_solve_2d_symmetric_positive_definite():
           np.array([1e2, 1e3]),
           np.array([1e-5, 1e5])]
 
-    # Select arbitrary symmetric positive-definite matrices
-    As = []
-
     # Identity
     identity = np.array([1.0, 0.0, 1.0])
-    As.append(identity)
-
+    As = [identity]
     # Small determinant
     small_det = np.array([1e-3, 1e-4, 1e-3])
     As.append(small_det)
@@ -443,23 +436,17 @@ def test_solve_3d_symmetric_positive_definite():
     # Select arbitrary taus
     taus = [0.0, 1.0, 1e-4, 1e5]
 
-    # Select arbitrary matrices
-    gs = []
-
     # diagonal
     diag = np.array([0.0, 0.0, 0.0])
-    gs.append(diag)
-
-    # canonical basis
-    gs.append(np.array([1.0, 0.0, 0.0]))
-    gs.append(np.array([0.0, 1.0, 0.0]))
-    gs.append(np.array([0.0, 0.0, 1.0]))
-
-    # other
-    gs.append(np.array([1.0, 0.5, 0.0]))
-    gs.append(np.array([0.0, 0.2, 0.1]))
-    gs.append(np.array([0.3, 0.0, 0.9]))
-
+    gs = [
+        diag,
+        np.array([1.0, 0.0, 0.0]),
+        np.array([0.0, 1.0, 0.0]),
+        np.array([0.0, 0.0, 1.0]),
+        np.array([1.0, 0.5, 0.0]),
+        np.array([0.0, 0.2, 0.1]),
+        np.array([0.3, 0.0, 0.9]),
+    ]
     for g in gs:
         A = g[:, None] * g[None, :]
         for tau in taus:

@@ -280,14 +280,12 @@ def test_streamline_registration():
                     img,
                     Space.VOX)
 
-                save_trk(tgm2, fname2, bbox_valid_check=False)
-
             else:
                 img = nib.Nifti1Image(np.zeros((2, 2, 2)), np.eye(4))
                 tgm1 = StatefulTractogram(sl1, img, Space.RASMM)
                 tgm2 = StatefulTractogram(sl2, img, Space.RASMM)
                 save_trk(tgm1, fname1, bbox_valid_check=False)
-                save_trk(tgm2, fname2, bbox_valid_check=False)
+            save_trk(tgm2, fname2, bbox_valid_check=False)
 
             aligned, matrix = streamline_registration(fname2, fname1)
             npt.assert_almost_equal(aligned[0], sl1[0], decimal=5)

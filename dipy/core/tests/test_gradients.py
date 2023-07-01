@@ -96,7 +96,7 @@ def test_GradientTable():
         # Select only UserWarning
         selected_w = [w for w in l_warns
                       if issubclass(w.category, UserWarning)]
-        assert len(selected_w) >= 1
+        assert selected_w
         msg = [str(m.message) for m in selected_w]
         npt.assert_equal('b0_threshold has a value > 199' in msg, True)
 
@@ -134,8 +134,8 @@ def test_GradientTable_btensor_calculation():
         gt = GradientTable(gradients, btens=btens)
         # Check that the number of b tensors is correct
         npt.assert_equal(gt.bvals.shape[0], gt.btens.shape[0])
-        for i, (bval, bvec, bten) in enumerate(zip(gt.bvals, gt.bvecs,
-                                                   gt.btens)):
+        for bval, bvec, bten in zip(gt.bvals, gt.bvecs,
+                                                   gt.btens):
             # Check that the b tensor magnitude is correct
             npt.assert_almost_equal(np.trace(bten), bval)
             # Check that the b tensor orientation is correct
@@ -174,7 +174,7 @@ def test_GradientTable_btensor_calculation():
                 npt.assert_almost_equal(np.abs(dot_prod), 1)
 
     # Check btens input option 3
-    btens = np.array([np.eye(3, 3) for i in range(6)])
+    btens = np.array([np.eye(3, 3) for _ in range(6)])
     gt = GradientTable(gradients, btens=btens)
     npt.assert_equal(btens, gt.btens)
     npt.assert_equal(gt.bvals.shape[0], gt.btens.shape[0])
@@ -182,8 +182,12 @@ def test_GradientTable_btensor_calculation():
     # Check invalid input
     npt.assert_raises(ValueError, GradientTable, gradients=gradients,
                       btens='PPP')
-    npt.assert_raises(ValueError, GradientTable, gradients=gradients,
-                      btens=np.array([np.eye(3, 3) for i in range(10)]))
+    npt.assert_raises(
+        ValueError,
+        GradientTable,
+        gradients=gradients,
+        btens=np.array([np.eye(3, 3) for _ in range(10)]),
+    )
     npt.assert_raises(ValueError, GradientTable, gradients=gradients,
                       btens=np.zeros((10, 10)))
 
@@ -415,14 +419,10 @@ def test_reorient_bvecs():
     full_affines.append(np.zeros((4, 4)))
     npt.assert_raises(ValueError, reorient_bvecs, gt_rot, full_affines)
 
-    # Shear components in the matrix need to be decomposed into rotation only,
-    # and should not lead to scaling of the bvecs
-    shear_affines = []
-    for i in np.where(~gt.b0s_mask)[0]:
-        shear_affines.append(np.array([[1, 0, 1, 0],
-                                       [0, 1, 0, 0],
-                                       [0, 0, 1, 0],
-                                       [0, 0, 0, 1]]))
+    shear_affines = [
+        np.array([[1, 0, 1, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+        for _ in np.where(~gt.b0s_mask)[0]
+    ]
     # atol is set to 1 here to do the scaling verification here,
     # so that the reorient_bvecs function does not throw an error itself
     new_gt = reorient_bvecs(gt, np.array(shear_affines)[:, :3, :3], atol=1)
@@ -444,7 +444,7 @@ def test_nan_bvecs():
         # Select only UserWarning
         selected_w = [w for w in l_warns
                       if issubclass(w.category, UserWarning)]
-        npt.assert_(len(selected_w) == 0)
+        npt.assert_(not selected_w)
 
 
 def test_generate_bvecs():
@@ -754,7 +754,7 @@ def test_params_to_btens():
     bdeltas = [0, 0, -1, 1]
     b_etas = [0, 0, 0, -1]
 
-    for i, (bval, bdelta, b_eta) in enumerate(zip(bvals, bdeltas, b_etas)):
+    for bval, bdelta, b_eta in zip(bvals, bdeltas, b_etas):
         npt.assert_raises(ValueError, params_to_btens, bval, bdelta, b_eta)
 
 

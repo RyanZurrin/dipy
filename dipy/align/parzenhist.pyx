@@ -199,9 +199,9 @@ class ParzenJointHistogram(object):
         if static.shape != moving.shape:
             raise ValueError("Images must have the same shape")
         dim = len(static.shape)
-        if not dim in [2, 3]:
+        if dim not in {2, 3}:
             msg = 'Only dimensions 2 and 3 are supported. ' +\
-                    str(dim) + ' received'
+                        str(dim) + ' received'
             raise ValueError(msg)
         if not self.setup_called:
             self.setup(static, moving, smask=None, mmask=None)
@@ -293,9 +293,8 @@ class ParzenJointHistogram(object):
         if static.shape != moving.shape:
             raise ValueError("Images must have the same shape")
         dim = len(static.shape)
-        if not dim in [2, 3]:
-            msg = 'Only dimensions 2 and 3 are supported. ' +\
-                str(dim) + ' received'
+        if dim not in {2, 3}:
+            msg = f'Only dimensions 2 and 3 are supported. {dim} received'
             raise ValueError(msg)
 
         if mgradient.shape != moving.shape + (dim,):
@@ -304,9 +303,9 @@ class ParzenJointHistogram(object):
         if not self.setup_called:
             self.setup(static, moving, smask, mmask)
 
-        n = theta.shape[0]
         nbins = self.nbins
 
+        n = theta.shape[0]
         if (self.joint_grad is None) or (self.joint_grad.shape[2] != n):
             self.joint_grad = np.zeros((nbins, nbins, n))
         if dim == 2:
@@ -379,7 +378,7 @@ class ParzenJointHistogram(object):
             or sample_points.shape[0] != nsamples):
             raise ValueError('Number of points and gradients are different.')
 
-        if not mgradient.dtype in [np.float32, np.float64]:
+        if mgradient.dtype not in [np.float32, np.float64]:
             raise ValueError('Gradients dtype must be floating point')
 
         n = theta.shape[0]
@@ -416,8 +415,7 @@ class ParzenJointHistogram(object):
             else:
                 raise ValueError('Gradients dtype must be floating point')
         else:
-            msg = 'Only dimensions 2 and 3 are supported. ' + str(dim) +\
-                ' received'
+            msg = f'Only dimensions 2 and 3 are supported. {str(dim)} received'
             raise ValueError(msg)
 
 

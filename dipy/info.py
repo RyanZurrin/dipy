@@ -3,6 +3,7 @@ settings in setup.py, the DIPY top-level docstring, and for building the
 docs.  In setup.py in particular, we exec this file, so it cannot import dipy
 """
 
+
 # DIPY version information.  An empty _version_extra corresponds to a
 # full release.  '.dev' as a _version_extra string means this is a development
 # version
@@ -13,10 +14,9 @@ _version_extra = 'dev0'
 # _version_extra = ''
 
 # Format expected by setup.py and doc/source/conf.py: string of form "X.Y.Z"
-__version__ = "%s.%s.%s%s" % (_version_major,
-                              _version_minor,
-                              _version_micro,
-                              _version_extra)
+__version__ = (
+    f"{_version_major}.{_version_minor}.{_version_micro}{_version_extra}"
+)
 
 CLASSIFIERS = ["Development Status :: 3 - Alpha",
                "Environment :: Console",
@@ -98,15 +98,17 @@ PLATFORMS           = "OS Independent"
 MAJOR               = _version_major
 MINOR               = _version_minor
 MICRO               = _version_micro
-ISRELEASE           = _version_extra == ''
+ISRELEASE = not _version_extra
 VERSION             = __version__
 PROVIDES            = ["dipy"]
-REQUIRES            = ["numpy (>=%s)" % NUMPY_MIN_VERSION,
-                       "scipy (>=%s)" % SCIPY_MIN_VERSION,
-                       "nibabel (>=%s)" % NIBABEL_MIN_VERSION,
-                       "h5py (>=%s)" % H5PY_MIN_VERSION,
-                       "packaging (>=%s)" % PACKAGING_MIN_VERSION,
-                       "tqdm"]
+REQUIRES = [
+    f"numpy (>={NUMPY_MIN_VERSION})",
+    f"scipy (>={SCIPY_MIN_VERSION})",
+    f"nibabel (>={NIBABEL_MIN_VERSION})",
+    f"h5py (>={H5PY_MIN_VERSION})",
+    f"packaging (>={PACKAGING_MIN_VERSION})",
+    "tqdm",
+]
 EXTRAS_REQUIRE = {
     "test": [
         "pytest",
@@ -144,5 +146,6 @@ EXTRAS_REQUIRE = {
 
 }
 
-EXTRAS_REQUIRE["all"] = list(set([a[i] for a in list(EXTRAS_REQUIRE.values())
-                                  for i in range(len(a))]))
+EXTRAS_REQUIRE["all"] = list(
+    {a[i] for a in list(EXTRAS_REQUIRE.values()) for i in range(len(a))}
+)

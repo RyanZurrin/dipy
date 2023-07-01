@@ -158,11 +158,14 @@ def test_interpolate_scalar_nn_3d():
 
     # Test the 'inside' flag
     for i in range(nsamples):
-        expected_inside = 1
-        for axis in range(3):
-            if locations[i, axis] < 0 or locations[i, axis] > (sz - 1):
-                expected_inside = 0
-                break
+        expected_inside = next(
+            (
+                0
+                for axis in range(3)
+                if locations[i, axis] < 0 or locations[i, axis] > (sz - 1)
+            ),
+            1,
+        )
         npt.assert_equal(inside[i], expected_inside)
 
 

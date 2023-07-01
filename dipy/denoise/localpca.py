@@ -128,13 +128,8 @@ def genpca(arr, sigma=None, mask=None, patch_radius=2, pca_method='eig',
         out_dtype = arr.dtype
 
     # We retain float64 precision, iff the input is in this precision:
-    if arr.dtype == np.float64:
-        calc_dtype = np.float64
-    # Otherwise, we'll calculate things in float32 (saving memory)
-    else:
-        calc_dtype = np.float32
-
-    if not arr.ndim == 4:
+    calc_dtype = np.float64 if arr.dtype == np.float64 else np.float32
+    if arr.ndim != 4:
         raise ValueError("PCA denoising can only be performed on 4D arrays.",
                          arr.shape)
 
@@ -151,10 +146,10 @@ def genpca(arr, sigma=None, mask=None, patch_radius=2, pca_method='eig',
         raise ValueError("patch_radius should have length 3")
     else:
         patch_radius = np.asarray(patch_radius).astype(int)
-    patch_radius[arr.shape[0:3] == np.ones(3)] = 0  # account for dim of size 1
+    patch_radius[arr.shape[:3] == np.ones(3)] = 0
     patch_size = 2 * patch_radius + 1
 
-    ash = arr.shape[0:3]
+    ash = arr.shape[:3]
     if np.any((ash != np.ones(3)) * (ash < patch_size)):
         raise ValueError("Array 'arr' is incorrect shape")
 
@@ -172,9 +167,12 @@ def genpca(arr, sigma=None, mask=None, patch_radius=2, pca_method='eig',
             root = arr.shape[-1]  # 1D
         root = root + 1 if (root % 2) == 0 else root  # make odd
         spr = int((root - 1) / 2)  # suggested patch_radius
-        e_s = "Number of samples {1} < Dimensionality {0}. "\
-              .format(arr.shape[-1], num_samples)
-        e_s += "This might have a performance impact. "
+        e_s = (
+            "Number of samples {1} < Dimensionality {0}. ".format(
+                arr.shape[-1], num_samples
+            )
+            + "This might have a performance impact. "
+        )
         e_s += "Increase patch_radius to {0} to avoid this warning, "\
                .format(spr)
         e_s += "or supply suppress_warning=True to your function call."
@@ -182,9 +180,11 @@ def genpca(arr, sigma=None, mask=None, patch_radius=2, pca_method='eig',
 
     if isinstance(sigma, np.ndarray):
         var = sigma ** 2
-        if not sigma.shape == arr.shape[:-1]:
-            e_s = "You provided a sigma array with a shape"
-            e_s += "{0} for data with".format(sigma.shape)
+        if sigma.shape != arr.shape[:-1]:
+            e_s = (
+                "You provided a sigma array with a shape"
+                + "{0} for data with".format(sigma.shape)
+            )
             e_s += "shape {0}. Please provide a sigma array".format(arr.shape)
             e_s += " that matches the spatial dimensions of the data."
             raise ValueError(e_s)
@@ -270,15 +270,13 @@ def genpca(arr, sigma=None, mask=None, patch_radius=2, pca_method='eig',
     denoised_arr = thetax / theta
     denoised_arr.clip(min=0, out=denoised_arr)
     denoised_arr[mask == 0] = 0
-    if return_sigma is True:
-        if sigma is None:
-            var = var / thetavar
-            var[mask == 0] = 0
-            return denoised_arr.astype(out_dtype), np.sqrt(var)
-        else:
-            return denoised_arr.astype(out_dtype), sigma
-    else:
+    if return_sigma is not True:
         return denoised_arr.astype(out_dtype)
+    if sigma is not None:
+        return denoised_arr.astype(out_dtype), sigma
+    var = var / thetavar
+    var[mask == 0] = 0
+    return denoised_arr.astype(out_dtype), np.sqrt(var)
 
 
 def localpca(arr, sigma, mask=None, patch_radius=2, pca_method='eig',

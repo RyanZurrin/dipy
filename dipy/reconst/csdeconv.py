@@ -235,8 +235,10 @@ class ConstrainedSphericalDeconvModel(SphHarmModel):
         no_params = ((sh_order + 1) * (sh_order + 2)) / 2
 
         if no_params > np.sum(~gtab.b0s_mask):
-            msg = "Number of parameters required for the fit are more "
-            msg += "than the actual data points"
+            msg = (
+                "Number of parameters required for the fit are more "
+                + "than the actual data points"
+            )
             warnings.warn(msg, UserWarning)
 
         x, y, z = gtab.gradients[self._where_dwi].T
@@ -388,8 +390,10 @@ class ConstrainedSDTModel(SphHarmModel):
         no_params = ((sh_order + 1) * (sh_order + 2)) / 2
 
         if no_params > np.sum(~gtab.b0s_mask):
-            msg = "Number of parameters required for the fit are more "
-            msg += "than the actual data points"
+            msg = (
+                "Number of parameters required for the fit are more "
+                + "than the actual data points"
+            )
             warnings.warn(msg, UserWarning)
 
         x, y, z = gtab.gradients[self._where_dwi].T
@@ -399,11 +403,7 @@ class ConstrainedSDTModel(SphHarmModel):
             m, n, theta[:, None], phi[:, None])
 
         # for the odf sphere
-        if reg_sphere is None:
-            self.sphere = get_sphere('symmetric362')
-        else:
-            self.sphere = reg_sphere
-
+        self.sphere = get_sphere('symmetric362') if reg_sphere is None else reg_sphere
         r, theta, phi = cart2sphere(
             self.sphere.x,
             self.sphere.y,
@@ -670,9 +670,9 @@ def csdeconv(dwsignal, X, B_reg, tau=0.1, convergence=50, P=None):
     if len(where_fodf_small) == 0:
         fodf = np.dot(B_reg, fodf_sh)
         where_fodf_small = (fodf < threshold).nonzero()[0]
-        # If the fodf still has no values less than threshold, return the fodf.
-        if len(where_fodf_small) == 0:
-            return fodf_sh, 0
+    # If the fodf still has no values less than threshold, return the fodf.
+    if len(where_fodf_small) == 0:
+        return fodf_sh, 0
 
     for num_it in range(1, convergence + 1):
         # This is the super-resolved trick.  Wherever there is a negative
@@ -1138,11 +1138,7 @@ def recursive_response(gtab, data, mask=None, sh_order=8, peak_thr=0.01,
     evals = fa_trace_to_lambdas(init_fa, init_trace)
     res_obj = (evals, S0)
 
-    if mask is None:
-        data = data.reshape(-1, data.shape[-1])
-    else:
-        data = data[mask]
-
+    data = data.reshape(-1, data.shape[-1]) if mask is None else data[mask]
     n = np.arange(0, sh_order + 1, 2)
     where_dwi = lazy_index(~gtab.b0s_mask)
     response_p = np.ones(len(n))
@@ -1194,5 +1190,4 @@ def recursive_response(gtab, data, mask=None, sh_order=8, peak_thr=0.01,
 def fa_trace_to_lambdas(fa=0.08, trace=0.0021):
     lambda1 = (trace / 3.) * (1 + 2 * fa / (3 - 2 * fa ** 2) ** (1 / 2.))
     lambda2 = (trace / 3.) * (1 - fa / (3 - 2 * fa ** 2) ** (1 / 2.))
-    evals = np.array([lambda1, lambda2, lambda2])
-    return evals
+    return np.array([lambda1, lambda2, lambda2])

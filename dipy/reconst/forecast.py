@@ -153,8 +153,7 @@ class ForecastModel(OdfModel, Cache):
         if 0 <= sh_order <= 12 and not bool(sh_order % 2):
             self.sh_order = sh_order
         else:
-            msg = "sh_order must be a non-zero even positive number "
-            msg += "between 2 and 12"
+            msg = "sh_order must be a non-zero even positive number " + "between 2 and 12"
             raise ValueError(msg)
 
         if sphere is None:
@@ -181,13 +180,12 @@ class ForecastModel(OdfModel, Cache):
         self.csd = False
         self.pos = False
 
-        if dec_alg.upper() == 'POS':
-            if have_cvxpy:
+        if have_cvxpy:
+            if dec_alg.upper() == 'POS':
                 self.wls = False
                 self.pos = True
-            else:
-                msg = 'cvxpy is needed to inforce positivity constraints.'
-                raise ValueError(msg)
+        elif dec_alg.upper() == 'POS':
+            raise ValueError('cvxpy is needed to inforce positivity constraints.')
 
         if dec_alg.upper() == 'CSD':
             self.csd = True
@@ -221,13 +219,10 @@ class ForecastModel(OdfModel, Cache):
         d_perp = np.cos(x[1])**2 * 3e-03
 
         if d_perp >= d_par:
-            temp = d_par
-            d_par = d_perp
-            d_perp = temp
-
+            d_par, d_perp = d_perp, d_par
         # round to avoid memory explosion
         diff_key = str(int(np.round(d_par * 1e05))) + \
-            str(int(np.round(d_perp * 1e05)))
+                str(int(np.round(d_perp * 1e05)))
 
         M_diff = self.cache_get('forecast_matrix', key=diff_key)
         if M_diff is None:
@@ -337,15 +332,16 @@ class ForecastFit(OdfFit):
     def fractional_anisotropy(self):
         r""" Calculates the fractional anisotropy.
         """
-        fa = np.sqrt(0.5 * (2*(self.d_par - self.d_perp)**2) /
-                     (self.d_par**2 + 2*self.d_perp**2))
-        return fa
+        return np.sqrt(
+            0.5
+            * (2 * (self.d_par - self.d_perp) ** 2)
+            / (self.d_par**2 + 2 * self.d_perp**2)
+        )
 
     def mean_diffusivity(self):
         r""" Calculates the mean diffusivity.
         """
-        md = (self.d_par + 2*self.d_perp)/3.0
-        return md
+        return (self.d_par + 2*self.d_perp)/3.0
 
     def predict(self, gtab=None, S0=1.0):
         r""" Calculates the fODF for a given discrete sphere.
@@ -368,9 +364,7 @@ class ForecastFit(OdfFit):
 
         rho = rho_matrix(self.sh_order, gtab.bvecs)
         M = M_diff * rho
-        S = S0 * np.dot(M, self._sh_coef)
-
-        return S
+        return S0 * np.dot(M, self._sh_coef)
 
     @property
     def sh_coeff(self):
@@ -442,14 +436,10 @@ def forecast_error_func(x, b_unique, E):
     d_perp = np.cos(x[1])**2 * 3e-03
 
     if d_perp >= d_par:
-        temp = d_par
-        d_par = d_perp
-        d_perp = temp
-
+        d_par, d_perp = d_perp, d_par
     E_reconst = 0.5 * np.exp(-b_unique * d_perp) * psi_l(0, (b_unique * (d_par - d_perp)))
 
-    v = E-E_reconst
-    return v
+    return E-E_reconst
 
 
 def psi_l(l, b):
@@ -467,7 +457,7 @@ def forecast_matrix(sh_order,  d_par, d_perp, bvals):
     M = np.zeros((bvals.shape[0], n_c))
     counter = 0
     for l in range(0, sh_order + 1, 2):
-        for m in range(-l, l + 1):
+        for _ in range(-l, l + 1):
             M[:, counter] = 2 * np.pi * \
                 np.exp(-bvals * d_perp) * psi_l(l, bvals * (d_par - d_perp))
             counter += 1

@@ -137,7 +137,7 @@ def peak_directions(odf, sphere, relative_peak_threshold=.5,
         return sphere.vertices[indices], values, indices
 
     odf_min = np.min(odf)
-    odf_min = odf_min if (odf_min >= 0.) else 0.
+    odf_min = max(odf_min, 0.)
     # because of the relative threshold this algorithm will give the same peaks
     # as if we divide (values - odf_min) with (odf_max - odf_min) or not so
     # here we skip the division to increase speed
@@ -472,9 +472,8 @@ def peaks_from_model(model, data, sphere, relative_peak_threshold,
     shape = data.shape[:-1]
     if mask is None:
         mask = np.ones(shape, dtype='bool')
-    else:
-        if mask.shape != shape:
-            raise ValueError("Mask is not the same shape as data.")
+    elif mask.shape != shape:
+        raise ValueError("Mask is not the same shape as data.")
 
     gfa_array = np.zeros(shape)
     qa_array = np.zeros((shape + (npeaks,)))

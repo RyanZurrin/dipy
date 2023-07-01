@@ -236,7 +236,7 @@ def test_jacobian_functions():
         theta = rng.uniform(size=(n,))
         T = transform.param_to_matrix(theta)
 
-        for j in range(nsamples):
+        for _ in range(nsamples):
             x = 255 * (rng.uniform(size=(dim,)) - 0.5)
             actual = transform.jacobian(theta, x)
 

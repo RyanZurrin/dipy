@@ -189,14 +189,8 @@ class DiffusionSpectrumFit(OdfFit):
             the return to origin probability
         """
 
-        if filtering:
-            values = self.data * self.model.filter
-        else:
-            values = self.data
-
-        rtop = values.sum()
-
-        return rtop
+        values = self.data * self.model.filter if filtering else self.data
+        return values.sum()
 
     def rtop_pdf(self, normalized=True):
         r""" Calculates the return to origin probability from the propagator, which is
@@ -233,8 +227,7 @@ class DiffusionSpectrumFit(OdfFit):
 
         center = self.qgrid_sz // 2
 
-        rtop = Pr[center, center, center]
-        return rtop
+        return Pr[center, center, center]
 
     def msd_discrete(self, normalized=True):
         r""" Calculates the mean squared displacement on the discrete propagator
@@ -277,8 +270,7 @@ class DiffusionSpectrumFit(OdfFit):
         z = np.tile(a.reshape(gridsize, 1, 1), (1, gridsize, gridsize))
         r2 = x ** 2 + y ** 2 + z ** 2
 
-        msd = np.sum(Pr * r2) / float((gridsize ** 3))
-        return msd
+        return np.sum(Pr * r2) / float((gridsize ** 3))
 
     def odf(self, sphere):
         r""" Calculates the real discrete odf for a given discrete sphere
@@ -418,8 +410,7 @@ def pdf_odf(Pr, rradius, interp_coords):
         coordinates in the pdf for interpolating the odf
     """
     PrIs = map_coordinates(Pr, interp_coords, order=1)
-    odf = (PrIs * rradius ** 2).sum(-1)
-    return odf
+    return (PrIs * rradius ** 2).sum(-1)
 
 
 def half_to_full_qspace(data, gtab):
@@ -483,9 +474,7 @@ def project_hemisph_bvecs(gtab):
         for j in I:
             if j != i:
                 break
-        if (j, i) in pairs:
-            pass
-        else:
+        if (j, i) not in pairs:
             pairs.append((i, j))
     bvecs2 = bvecs.copy()
     for (i, j) in pairs:
@@ -644,7 +633,7 @@ def LR_deconv(prop, psf, numit=5, acc_factor=1):
     # Enforce Positivity
     prop = np.clip(prop, 0, np.inf)
     prop_deconv = prop.copy()
-    for it in range(numit):
+    for _ in range(numit):
         # Blur the estimate
         reBlurred = np.real(np.fft.ifftn(otf * np.fft.fftn(prop_deconv)))
         reBlurred[reBlurred < eps] = eps
@@ -657,5 +646,3 @@ def LR_deconv(prop, psf, numit=5, acc_factor=1):
     return prop_deconv / prop_deconv.sum()
 
 
-if __name__ == '__main__':
-    pass

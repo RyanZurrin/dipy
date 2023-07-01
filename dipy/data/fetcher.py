@@ -42,11 +42,11 @@ def _log(msg):
 
 
 def copyfileobj_withprogress(fsrc, fdst, total_length, length=16 * 1024):
-    for ii in tqdm(range(0, int(total_length), length), unit=" MB"):
-        buf = fsrc.read(length)
-        if not buf:
+    for _ in tqdm(range(0, int(total_length), length), unit=" MB"):
+        if buf := fsrc.read(length):
+            fdst.write(buf)
+        else:
             break
-        fdst.write(buf)
 
 
 def _already_there_msg(folder):
@@ -54,7 +54,7 @@ def _already_there_msg(folder):
     Prints a message indicating that a certain data-set is already in place
     """
     msg = 'Dataset is already in place. If you want to fetch it again '
-    msg += 'please first remove the folder %s ' % folder
+    msg += f'please first remove the folder {folder} '
     _log(msg)
 
 
@@ -129,11 +129,11 @@ def fetch_data(files, folder, data_size=None):
 
     """
     if not os.path.exists(folder):
-        _log("Creating new folder %s" % folder)
+        _log(f"Creating new folder {folder}")
         os.makedirs(folder)
 
     if data_size is not None:
-        _log('Data size is approximately %s' % data_size)
+        _log(f'Data size is approximately {data_size}')
 
     all_skip = True
     for f in files:
@@ -142,13 +142,13 @@ def fetch_data(files, folder, data_size=None):
         if os.path.exists(fullpath) and (_get_file_md5(fullpath) == md5):
             continue
         all_skip = False
-        _log('Downloading "%s" to %s' % (f, folder))
+        _log(f'Downloading "{f}" to {folder}')
         _get_file_data(fullpath, url)
         check_md5(fullpath, md5)
     if all_skip:
         _already_there_msg(folder)
     else:
-        _log("Files successfully downloaded to %s" % folder)
+        _log(f"Files successfully downloaded to {folder}")
 
 
 def _make_fetcher(name, folder, baseurl, remote_fnames, local_fnames,
@@ -201,7 +201,7 @@ def _make_fetcher(name, folder, baseurl, remote_fnames, local_fnames,
         if unzip:
             for f in local_fnames:
                 split_ext = os.path.splitext(f)
-                if split_ext[-1] == '.gz' or split_ext[-1] == '.bz2':
+                if split_ext[-1] in ['.gz', '.bz2']:
                     if os.path.splitext(split_ext[0])[-1] == '.tar':
                         ar = tarfile.open(pjoin(folder, f))
                         ar.extractall(path=folder)
@@ -226,16 +226,17 @@ def _make_fetcher(name, folder, baseurl, remote_fnames, local_fnames,
 fetch_isbi2013_2shell = _make_fetcher(
     "fetch_isbi2013_2shell",
     pjoin(dipy_home, 'isbi2013'),
-    UW_RW_URL + '1773/38465/',
-    ['phantom64.nii.gz',
-     'phantom64.bval',
-     'phantom64.bvec'],
+    f'{UW_RW_URL}1773/38465/',
     ['phantom64.nii.gz', 'phantom64.bval', 'phantom64.bvec'],
-    ['42911a70f232321cf246315192d69c42',
-     '90e8cf66e0f4d9737a3b3c0da24df5ea',
-     '4b7aa2757a1ccab140667b76e8075cb1'],
+    ['phantom64.nii.gz', 'phantom64.bval', 'phantom64.bvec'],
+    [
+        '42911a70f232321cf246315192d69c42',
+        '90e8cf66e0f4d9737a3b3c0da24df5ea',
+        '4b7aa2757a1ccab140667b76e8075cb1',
+    ],
     doc="Download a 2-shell software phantom dataset",
-    data_size="")
+    data_size="",
+)
 
 fetch_stanford_labels = _make_fetcher(
     "fetch_stanford_labels",
@@ -250,13 +251,16 @@ fetch_stanford_labels = _make_fetcher(
 fetch_sherbrooke_3shell = _make_fetcher(
     "fetch_sherbrooke_3shell",
     pjoin(dipy_home, 'sherbrooke_3shell'),
-    UW_RW_URL + "1773/38475/",
+    f"{UW_RW_URL}1773/38475/",
     ['HARDI193.nii.gz', 'HARDI193.bval', 'HARDI193.bvec'],
     ['HARDI193.nii.gz', 'HARDI193.bval', 'HARDI193.bvec'],
-    ['0b735e8f16695a37bfbd66aab136eb66',
-     'e9b9bb56252503ea49d31fb30a0ac637',
-     '0c83f7e8b917cd677ad58a078658ebb7'],
-    doc="Download a 3shell HARDI dataset with 192 gradient direction")
+    [
+        '0b735e8f16695a37bfbd66aab136eb66',
+        'e9b9bb56252503ea49d31fb30a0ac637',
+        '0c83f7e8b917cd677ad58a078658ebb7',
+    ],
+    doc="Download a 3shell HARDI dataset with 192 gradient direction",
+)
 
 
 fetch_stanford_hardi = _make_fetcher(
@@ -300,28 +304,31 @@ fetch_stanford_pve_maps = _make_fetcher(
 fetch_taiwan_ntu_dsi = _make_fetcher(
     "fetch_taiwan_ntu_dsi",
     pjoin(dipy_home, 'taiwan_ntu_dsi'),
-    UW_RW_URL + "1773/38480/",
+    f"{UW_RW_URL}1773/38480/",
     ['DSI203.nii.gz', 'DSI203.bval', 'DSI203.bvec', 'DSI203_license.txt'],
     ['DSI203.nii.gz', 'DSI203.bval', 'DSI203.bvec', 'DSI203_license.txt'],
-    ['950408c0980a7154cb188666a885a91f',
-     '602e5cb5fad2e7163e8025011d8a6755',
-     'a95eb1be44748c20214dc7aa654f9e6b',
-     '7fa1d5e272533e832cc7453eeba23f44'],
+    [
+        '950408c0980a7154cb188666a885a91f',
+        '602e5cb5fad2e7163e8025011d8a6755',
+        'a95eb1be44748c20214dc7aa654f9e6b',
+        '7fa1d5e272533e832cc7453eeba23f44',
+    ],
     doc="Download a DSI dataset with 203 gradient directions",
-    msg="See DSI203_license.txt for LICENSE. For the complete datasets" +
-        " please visit http://dsi-studio.labsolver.org",
-    data_size="91MB")
+    msg="See DSI203_license.txt for LICENSE. For the complete datasets"
+    + " please visit http://dsi-studio.labsolver.org",
+    data_size="91MB",
+)
 
 fetch_syn_data = _make_fetcher(
     "fetch_syn_data",
     pjoin(dipy_home, 'syn_test'),
-    UW_RW_URL + "1773/38476/",
+    f"{UW_RW_URL}1773/38476/",
     ['t1.nii.gz', 'b0.nii.gz'],
     ['t1.nii.gz', 'b0.nii.gz'],
-    ['701bda02bb769655c7d4a9b1df2b73a6',
-     'e4b741f0c77b6039e67abb2885c97a78'],
+    ['701bda02bb769655c7d4a9b1df2b73a6', 'e4b741f0c77b6039e67abb2885c97a78'],
     data_size="12MB",
-    doc="Download t1 and b0 volumes from the same session")
+    doc="Download t1 and b0 volumes from the same session",
+)
 
 fetch_mni_template = _make_fetcher(
     "fetch_mni_template",
@@ -345,25 +352,27 @@ fetch_mni_template = _make_fetcher(
 fetch_scil_b0 = _make_fetcher(
     "fetch_scil_b0",
     dipy_home,
-    UW_RW_URL + "1773/38479/",
+    f"{UW_RW_URL}1773/38479/",
     ['datasets_multi-site_all_companies.zip'],
     ['datasets_multi-site_all_companies.zip'],
     ["e9810fa5bf21b99da786647994d7d5b7"],
-    doc="Download b=0 datasets from multiple MR systems (GE, Philips, " +
-        "Siemens) and different magnetic fields (1.5T and 3T)",
+    doc="Download b=0 datasets from multiple MR systems (GE, Philips, "
+    + "Siemens) and different magnetic fields (1.5T and 3T)",
     data_size="9.2MB",
-    unzip=True)
+    unzip=True,
+)
 
 fetch_bundles_2_subjects = _make_fetcher(
     "fetch_bundles_2_subjects",
     pjoin(dipy_home, 'exp_bundles_and_maps'),
-    UW_RW_URL + '1773/38477/',
+    f'{UW_RW_URL}1773/38477/',
     ['bundles_2_subjects.tar.gz'],
     ['bundles_2_subjects.tar.gz'],
     ['97756fbef11ce2df31f1bedf1fc7aac7'],
     data_size="234MB",
     doc="Download 2 subjects from the SNAIL dataset with their bundles",
-    unzip=True)
+    unzip=True,
+)
 
 fetch_ivim = _make_fetcher(
     "fetch_ivim",
@@ -379,23 +388,32 @@ fetch_ivim = _make_fetcher(
 fetch_cfin_multib = _make_fetcher(
     "fetch_cfin_multib",
     pjoin(dipy_home, 'cfin_multib'),
-    UW_RW_URL + '/1773/38488/',
-    ['T1.nii',
-     '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.nii',
-     '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bval',
-     '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bvec'],
-    ['T1.nii',
-     '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.nii',
-     '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bval',
-     '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bvec'],
-    ['889883b5e7d93a6e372bc760ea887e7c',
-     '9daea1d01d68fd0055a3b34f5ffd5f6e',
-     '3ee44135fde7ea5c9b8c801414bdde2c',
-     '948373391de950e7cc1201ba9f696bf0'],
+    f'{UW_RW_URL}/1773/38488/',
+    [
+        'T1.nii',
+        '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.nii',
+        '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bval',
+        '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bvec',
+    ],
+    [
+        'T1.nii',
+        '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.nii',
+        '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bval',
+        '__DTI_AX_ep2d_2_5_iso_33d_20141015095334_4.bvec',
+    ],
+    [
+        '889883b5e7d93a6e372bc760ea887e7c',
+        '9daea1d01d68fd0055a3b34f5ffd5f6e',
+        '3ee44135fde7ea5c9b8c801414bdde2c',
+        '948373391de950e7cc1201ba9f696bf0',
+    ],
     doc="Download CFIN multi b-value diffusion data",
-    msg=("This data was provided by Brian Hansen and Sune Jespersen" +
-         " More details about the data are available in their paper: " +
-         " https://www.nature.com/articles/sdata201672"))
+    msg=(
+        "This data was provided by Brian Hansen and Sune Jespersen"
+        + " More details about the data are available in their paper: "
+        + " https://www.nature.com/articles/sdata201672"
+    ),
+)
 
 fetch_file_formats = _make_fetcher(
     "bundle_file_formats_example",
@@ -660,8 +678,7 @@ def get_fnames(name='small_64D'):
         fimg = pjoin(DATA_DIR, 'small_25.nii.gz')
         return fimg, fbvals, fbvecs
     if name == 'small_25_streamlines':
-        fstreamlines = pjoin(DATA_DIR, 'EuDX_small_25.trk')
-        return fstreamlines
+        return pjoin(DATA_DIR, 'EuDX_small_25.trk')
     if name == "S0_10":
         fimg = pjoin(DATA_DIR, 'S0_10slices.nii.gz')
         return fimg
@@ -678,7 +695,7 @@ def get_fnames(name='small_64D'):
         return pjoin(DATA_DIR, 't1_coronal_slice.npy')
     if name == "t-design":
         N = 45
-        return pjoin(DATA_DIR, 'tdesign' + str(N) + '.txt')
+        return pjoin(DATA_DIR, f'tdesign{N}.txt')
     if name == 'scil_b0':
         files, folder = fetch_scil_b0()
         files = files['datasets_multi-site_all_companies.zip'][2]
@@ -762,12 +779,10 @@ def get_fnames(name='small_64D'):
         return fdata, fbval, fbvec, fmask
     if name == 'fury_surface':
         files, folder = fetch_fury_surface()
-        surface_name = pjoin(folder, '100307_white_lh.vtk')
-        return surface_name
+        return pjoin(folder, '100307_white_lh.vtk')
     if name == 'histo_resdnn_weights':
         files, folder = fetch_resdnn_weights()
-        wraw = pjoin(folder, 'resdnn_weights_mri_2018.h5')
-        return wraw
+        return pjoin(folder, 'resdnn_weights_mri_2018.h5')
     if name == 'DiB_70_lte_pte_ste':
         _, folder = fetch_DiB_70_lte_pte_ste()
         fdata = pjoin(folder, 'DiB_70_lte_pte_ste.nii.gz')
@@ -954,8 +969,7 @@ def read_stanford_hardi():
 
 def read_stanford_t1():
     f_t1 = get_fnames('stanford_t1')
-    img = nib.load(f_t1)
-    return img
+    return nib.load(f_t1)
 
 
 def read_stanford_pve_maps():
@@ -1007,32 +1021,32 @@ def fetch_tissue_data():
     """ Download images to be used for tissue classification
     """
 
-    t1 = 'https://ndownloader.figshare.com/files/6965969'
-    t1d = 'https://ndownloader.figshare.com/files/6965981'
-    ap = 'https://ndownloader.figshare.com/files/6965984'
-
     folder = pjoin(dipy_home, 'tissue_data')
 
-    md5_list = ['99c4b77267a6855cbfd96716d5d65b70',  # t1
-                '4b87e1b02b19994fbd462490cc784fa3',  # t1d
-                'c0ea00ed7f2ff8b28740f18aa74bff6a']  # ap
-
-    url_list = [t1, t1d, ap]
     fname_list = ['t1_brain.nii.gz', 't1_brain_denoised.nii.gz',
                   'power_map.nii.gz']
 
     if not os.path.exists(folder):
-        _log('Creating new directory %s' % folder)
+        _log(f'Creating new directory {folder}')
         os.makedirs(folder)
         msg = 'Downloading 3 Nifti1 images (9.3MB)...'
         _log(msg)
 
+        md5_list = ['99c4b77267a6855cbfd96716d5d65b70',  # t1
+                    '4b87e1b02b19994fbd462490cc784fa3',  # t1d
+                    'c0ea00ed7f2ff8b28740f18aa74bff6a']  # ap
+
+        t1 = 'https://ndownloader.figshare.com/files/6965969'
+        t1d = 'https://ndownloader.figshare.com/files/6965981'
+        ap = 'https://ndownloader.figshare.com/files/6965984'
+
+        url_list = [t1, t1d, ap]
         for i in range(len(md5_list)):
             _get_file_data(pjoin(folder, fname_list[i]), url_list[i])
             check_md5(pjoin(folder, fname_list[i]), md5_list[i])
 
         _log('Done.')
-        _log('Files copied in folder %s' % folder)
+        _log(f'Files copied in folder {folder}')
     else:
         _already_there_msg(folder)
 
@@ -1160,16 +1174,12 @@ def read_mni_template(version="a", contrast="T2"):
         if isinstance(contrast, str):
             return nib.load(file_dict_a[contrast])
         else:
-            out_list = []
-            for k in contrast:
-                out_list.append(nib.load(file_dict_a[k]))
+            out_list = [nib.load(file_dict_a[k]) for k in contrast]
     elif version == "c":
         if isinstance(contrast, str):
             return nib.load(file_dict_c[contrast])
         else:
-            out_list = []
-            for k in contrast:
-                out_list.append(nib.load(file_dict_c[k]))
+            out_list = [nib.load(file_dict_c[k]) for k in contrast]
     else:
         raise ValueError("Only 2009a and 2009c versions are available")
     return out_list
@@ -1227,11 +1237,8 @@ def fetch_cenir_multib(with_raw=False):
                          '7c23e8a5198624aa29455f0578025d4f',
                          '4e4324c676f5a97b3ded8bbb100bf6e5'])
 
-    files = {}
-    baseurl = UW_RW_URL + '1773/33311/'
-    for f, m in zip(fname_list, md5_list):
-        files[f] = (baseurl + f, m)
-
+    baseurl = f'{UW_RW_URL}1773/33311/'
+    files = {f: (baseurl + f, m) for f, m in zip(fname_list, md5_list)}
     fetch_data(files, folder)
     return files, folder
 
@@ -1352,10 +1359,11 @@ def read_bundles_2_subjects(subj_id='subj_1', metrics=('fa',),
 
     for bun in bundles:
 
-        streams = load_tractogram(pjoin(dname, subj_id,
-                                        'bundles', 'bundles_' + bun + '.trk'),
-                                  'same',
-                                  bbox_valid_check=False).streamlines
+        streams = load_tractogram(
+            pjoin(dname, subj_id, 'bundles', f'bundles_{bun}.trk'),
+            'same',
+            bbox_valid_check=False,
+        ).streamlines
 
         streamlines = Streamlines(streams)
         res[bun] = streamlines
@@ -1409,8 +1417,7 @@ def read_cfin_t1():
 
     """
     _, _, _, fraw = get_fnames('cfin_multib')
-    img = nib.load(fraw)
-    return img  # , gtab
+    return nib.load(fraw)
 
 
 def get_file_formats():
@@ -1423,13 +1430,16 @@ def get_file_formats():
     """
     ref_anat = pjoin(dipy_home,
                      'bundle_file_formats_example', 'template0.nii.gz')
-    bundles_list = []
-    for filename in ['cc_m_sub.trk', 'laf_m_sub.tck', 'lpt_m_sub.fib',
-                     'raf_m_sub.vtk', 'rpt_m_sub.dpy']:
-        bundles_list.append(pjoin(dipy_home,
-                                  'bundle_file_formats_example',
-                                  filename))
-
+    bundles_list = [
+        pjoin(dipy_home, 'bundle_file_formats_example', filename)
+        for filename in [
+            'cc_m_sub.trk',
+            'laf_m_sub.tck',
+            'lpt_m_sub.fib',
+            'raf_m_sub.vtk',
+            'rpt_m_sub.dpy',
+        ]
+    ]
     return bundles_list, ref_anat
 
 
@@ -1483,12 +1493,9 @@ def get_target_tractogram_hcp():
     -------
     file1 : string
     """
-    file1 = pjoin(dipy_home,
-                  'target_tractogram_hcp',
-                  'hcp_tractogram',
-                  'streamlines.trk')
-
-    return file1
+    return pjoin(
+        dipy_home, 'target_tractogram_hcp', 'hcp_tractogram', 'streamlines.trk'
+    )
 
 
 def read_qte_lte_pte():
@@ -1509,7 +1516,7 @@ def read_qte_lte_pte():
     mask_img = nib.load(fmask)
     bvals = np.loadtxt(fbval)
     bvecs = np.loadtxt(fbvec)
-    btens = np.array(['LTE' for i in range(61)] + ['PTE' for i in range(61)])
+    btens = np.array(['LTE' for _ in range(61)] + ['PTE' for _ in range(61)])
     gtab = gradient_table(bvals, bvecs, btens=btens)
     return data_img, mask_img, gtab
 
@@ -1532,17 +1539,39 @@ def read_DiB_70_lte_pte_ste():
     mask_img = nib.load(fmask)
     bvals = np.loadtxt(fbval)
     bvecs = np.loadtxt(fbvec)
-    btens = np.array(['LTE' for i in range(1)] +
-                     ['LTE' for i in range(4)] +
-                     ['PTE' for i in range(3)] +
-                     ['STE' for i in range(3)] +
-                     ['STE' for i in range(4)] +
-                     ['LTE' for i in range(8)] +
-                     ['PTE' for i in range(5)] +
-                     ['STE' for i in range(5)] +
-                     ['LTE' for i in range(21)] +
-                     ['PTE' for i in range(10)] +
-                     ['STE' for i in range(6)])
+    btens = np.array(
+        (
+            (
+                (
+                    (
+                        (
+                            (
+                                (
+                                    (
+                                        (
+                                            (
+                                                ['LTE' for _ in range(1)]
+                                                + ['LTE' for _ in range(4)]
+                                            )
+                                            + ['PTE' for _ in range(3)]
+                                        )
+                                        + ['STE' for _ in range(3)]
+                                    )
+                                    + ['STE' for _ in range(4)]
+                                )
+                                + ['LTE' for _ in range(8)]
+                            )
+                            + ['PTE' for _ in range(5)]
+                        )
+                        + ['STE' for _ in range(5)]
+                    )
+                    + ['LTE' for _ in range(21)]
+                )
+                + ['PTE' for _ in range(10)]
+            )
+            + ['STE' for _ in range(6)]
+        )
+    )
     gtab = gradient_table(bvals, bvecs, btens=btens)
     return data_img, mask_img, gtab
 
@@ -1562,29 +1591,62 @@ def read_DiB_217_lte_pte_ste():
     """
     fdata_1, fdata_2, fbval, fbvec, fmask = get_fnames('DiB_217_lte_pte_ste')
     _, folder = fetch_DiB_217_lte_pte_ste()
-    if os.path.isfile(pjoin(folder, 'DiB_217_lte_pte_ste.nii.gz')):
-        data_img = nib.load(pjoin(folder, 'DiB_217_lte_pte_ste.nii.gz'))
-    else:
+    if not os.path.isfile(pjoin(folder, 'DiB_217_lte_pte_ste.nii.gz')):
         data_1, affine = load_nifti(fdata_1)
         data_2, _ = load_nifti(fdata_2)
         data = np.concatenate((data_1, data_2), axis=3)
         save_nifti(pjoin(folder, 'DiB_217_lte_pte_ste.nii.gz'), data, affine)
-        data_img = nib.load(pjoin(folder, 'DiB_217_lte_pte_ste.nii.gz'))
+    data_img = nib.load(pjoin(folder, 'DiB_217_lte_pte_ste.nii.gz'))
     mask_img = nib.load(fmask)
     bvals = np.loadtxt(fbval)
     bvecs = np.loadtxt(fbvec)
-    btens = np.array(['LTE' for i in range(13)] +
-                     ['LTE' for i in range(10)] +
-                     ['PTE' for i in range(10)] +
-                     ['STE' for i in range(10)] +
-                     ['LTE' for i in range(10)] +
-                     ['PTE' for i in range(10)] +
-                     ['STE' for i in range(10)] +
-                     ['LTE' for i in range(16)] +
-                     ['PTE' for i in range(16)] +
-                     ['STE' for i in range(10)] +
-                     ['LTE' for i in range(46)] +
-                     ['PTE' for i in range(46)] +
-                     ['STE' for i in range(10)])
+    btens = np.array(
+        (
+            (
+                (
+                    (
+                        (
+                            (
+                                (
+                                    (
+                                        (
+                                            (
+                                                (
+                                                    (
+                                                        [
+                                                            'LTE'
+                                                            for _ in range(13)
+                                                        ]
+                                                        + [
+                                                            'LTE'
+                                                            for _ in range(10)
+                                                        ]
+                                                    )
+                                                    + [
+                                                        'PTE'
+                                                        for _ in range(10)
+                                                    ]
+                                                )
+                                                + ['STE' for _ in range(10)]
+                                            )
+                                            + ['LTE' for _ in range(10)]
+                                        )
+                                        + ['PTE' for _ in range(10)]
+                                    )
+                                    + ['STE' for _ in range(10)]
+                                )
+                                + ['LTE' for _ in range(16)]
+                            )
+                            + ['PTE' for _ in range(16)]
+                        )
+                        + ['STE' for _ in range(10)]
+                    )
+                    + ['LTE' for _ in range(46)]
+                )
+                + ['PTE' for _ in range(46)]
+            )
+            + ['STE' for _ in range(10)]
+        )
+    )
     gtab = gradient_table(bvals, bvecs, btens=btens)
     return data_img, mask_img, gtab

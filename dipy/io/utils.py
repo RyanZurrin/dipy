@@ -175,7 +175,7 @@ def is_reference_info_valid(affine, dimensions, voxel_sizes, voxel_order):
     all_valid = True
     only_3d_warning = False
 
-    if not affine.shape == (4, 4):
+    if affine.shape != (4, 4):
         all_valid = False
         logging.warning('Transformation matrix must be 4x4')
 
@@ -183,7 +183,7 @@ def is_reference_info_valid(affine, dimensions, voxel_sizes, voxel_order):
         all_valid = False
         logging.warning('Rotation matrix cannot be all zeros')
 
-    if not len(dimensions) >= 3:
+    if len(dimensions) < 3:
         all_valid = False
         only_3d_warning = True
 
@@ -195,7 +195,7 @@ def is_reference_info_valid(affine, dimensions, voxel_sizes, voxel_order):
             all_valid = False
             logging.warning('Dimensions must be above 0.')
 
-    if not len(voxel_sizes) >= 3:
+    if len(voxel_sizes) < 3:
         all_valid = False
         only_3d_warning = True
     for i in voxel_sizes:
@@ -206,7 +206,7 @@ def is_reference_info_valid(affine, dimensions, voxel_sizes, voxel_order):
             all_valid = False
             logging.warning('Voxel size must be above 0.')
 
-    if not len(voxel_order) >= 3:
+    if len(voxel_order) < 3:
         all_valid = False
         only_3d_warning = True
     for i in voxel_order:
@@ -383,7 +383,7 @@ def save_buan_profiles_hdf5(fname, dt):
     """
 
     df = pd.DataFrame(dt)
-    filename_hdf5 = fname + '.h5'
+    filename_hdf5 = f'{fname}.h5'
 
     store = pd.HDFStore(filename_hdf5, complevel=9)
     store.append(fname, df, data_columns=True, complevel=9)

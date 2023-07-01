@@ -1,5 +1,6 @@
 """ Utility functions for algebra etc """
 
+
 import itertools
 import math
 import numpy as np
@@ -22,7 +23,7 @@ _AXES2TUPLE = {
     'rzxy': (1, 1, 0, 1), 'ryxy': (1, 1, 1, 1), 'ryxz': (2, 0, 0, 1),
     'rzxz': (2, 0, 1, 1), 'rxyz': (2, 1, 0, 1), 'rzyz': (2, 1, 1, 1)}
 
-_TUPLE2AXES = dict((v, k) for k, v in _AXES2TUPLE.items())
+_TUPLE2AXES = {v: k for k, v in _AXES2TUPLE.items()}
 
 
 def sphere2cart(r, theta, phi):
@@ -275,14 +276,19 @@ def rodrigues_axis_rotation(r, theta):
     if theta > 1e-30:
         n = r / np.linalg.norm(r)
         Sn = np.array([[0, -n[2], n[1]], [n[2], 0, -n[0]], [-n[1], n[0], 0]])
-        R = np.eye(3) + np.sin(theta) * Sn + \
-            (1 - np.cos(theta)) * np.dot(Sn, Sn)
+        return (
+            np.eye(3)
+            + np.sin(theta) * Sn
+            + (1 - np.cos(theta)) * np.dot(Sn, Sn)
+        )
     else:
         Sr = np.array([[0, -r[2], r[1]], [r[2], 0, -r[0]], [-r[1], r[0], 0]])
         theta2 = theta * theta
-        R = np.eye(3) + (1 - theta2 / 6.) * \
-            Sr + (.5 - theta2 / 24.) * np.dot(Sr, Sr)
-    return R
+        return (
+            np.eye(3)
+            + (1 - theta2 / 6.0) * Sr
+            + (0.5 - theta2 / 24.0) * np.dot(Sr, Sr)
+        )
 
 
 def nearest_pos_semi_def(B):
@@ -803,14 +809,12 @@ def circumradius(a, b, c):
     y = b - c
     yy = np.linalg.norm(y) ** 2
     z = np.cross(x, y)
-    # test for collinearity
     if np.linalg.norm(z) == 0:
         return np.sqrt(np.max(np.dot(x, x), np.dot(y, y),
                               np.dot(a - b, a - b))) / 2.
-    else:
-        m = np.vstack((x, y, z))
-        w = np.dot(np.linalg.inv(m.T), np.array([xx / 2., yy / 2., 0]))
-        return np.linalg.norm(w) / 2.
+    m = np.vstack((x, y, z))
+    w = np.dot(np.linalg.inv(m.T), np.array([xx / 2., yy / 2., 0]))
+    return np.linalg.norm(w) / 2.
 
 
 def vec2vec_rotmat(u, v):
@@ -860,10 +864,7 @@ def vec2vec_rotmat(u, v):
         norm_u_v = np.linalg.norm(u - v)
         # This is the case of two antipodal vectors:
         # ** former checking assumed norm(u) == norm(v)
-        if norm_u_v > np.linalg.norm(u):
-            return -np.eye(3)
-        return np.eye(3)
-
+        return -np.eye(3) if norm_u_v > np.linalg.norm(u) else np.eye(3)
     # if everything ok, normalize w
     w = w / wn
 
@@ -881,10 +882,7 @@ def vec2vec_rotmat(u, v):
 
     # make sure that you don't return any Nans
     # check using the appropriate tool in numpy
-    if np.any(np.isnan(Rp)):
-        return np.eye(3)
-
-    return Rp
+    return np.eye(3) if np.any(np.isnan(Rp)) else Rp
 
 
 def compose_transformations(*mats):
@@ -1063,7 +1061,7 @@ def is_hemispherical(vecs):
         raise ValueError("Input vectors must be unit vectors")
 
     # Generate all pairwise cross products
-    v0, v1 = zip(*[p for p in itertools.permutations(vecs, 2)])
+    v0, v1 = zip(*list(itertools.permutations(vecs, 2)))
     cross_prods = np.cross(v0, v1)
 
     # Normalize them

@@ -195,9 +195,7 @@ def sfb3D(lo, hi, sf1, sf2=None, sf3=None):
     # filter along dimension 1
     L = sfb3D_A(LL, LH, sf2, 1)
     H = sfb3D_A(HL, HH, sf2, 1)
-    # filter along dimension 0
-    y = sfb3D_A(L, H, sf1, 0)
-    return y
+    return sfb3D_A(L, H, sf1, 0)
 
 
 def afb3D(x, af1, af2=None, af3=None):

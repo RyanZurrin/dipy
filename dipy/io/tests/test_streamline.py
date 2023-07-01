@@ -16,11 +16,8 @@ from nibabel.tmpdirs import InTemporaryDirectory
 from dipy.utils.optpkg import optional_package
 fury, have_fury, setup_module = optional_package('fury')
 
-filepath_dix = {}
 files, folder = fetch_gold_standard_io()
-for filename in files:
-    filepath_dix[filename] = os.path.join(folder, filename)
-
+filepath_dix = {filename: os.path.join(folder, filename) for filename in files}
 with open(filepath_dix['points_data.json']) as json_file:
     points_data = dict(json.load(json_file))
 
@@ -154,7 +151,7 @@ streamlines = Streamlines([streamline[[0, 10]], streamline,
 
 def io_tractogram(extension):
     with InTemporaryDirectory():
-        fname = 'test.{}'.format(extension)
+        fname = f'test.{extension}'
 
         in_affine = np.eye(4)
         in_dimensions = np.array([50, 50, 50])
@@ -164,11 +161,7 @@ def io_tractogram(extension):
         sft = StatefulTractogram(streamlines, nii_header, space=Space.RASMM)
         save_tractogram(sft, fname, bbox_valid_check=False)
 
-        if extension == 'trk':
-            reference = 'same'
-        else:
-            reference = nii_header
-
+        reference = 'same' if extension == 'trk' else nii_header
         sft = load_tractogram(fname, reference, bbox_valid_check=False)
         affine, dimensions, voxel_sizes, _ = sft.space_attributes
 

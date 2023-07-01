@@ -54,10 +54,7 @@ def _image_tv(x, axis=0, n_points=3):
         ntv = ntv + np.absolute(xs[:, (n_points+1-n):(-n_points-1-n)] -
                                 xs[:, (n_points-n):(-n_points-2-n)])
 
-    if axis:
-        return ptv, ntv
-    else:
-        return ptv.T, ntv.T
+    return (ptv, ntv) if axis else (ptv.T, ntv.T)
 
 
 def _gibbs_removal_1d(x, axis=0, n_points=3):
@@ -234,9 +231,7 @@ def _gibbs_removal_2d(image, n_points=3, G0=None, G1=None):
 
     C1 = _fft.fft2(img_c1)
     C0 = _fft.fft2(img_c0)
-    imagec = abs(_fft.ifft2(_fft.fftshift(C1)*G1 + _fft.fftshift(C0)*G0))
-
-    return imagec
+    return abs(_fft.ifft2(_fft.fftshift(C1)*G1 + _fft.fftshift(C0)*G0))
 
 
 @deprecated_params('num_threads', 'num_processes', since='1.4', until='1.5')

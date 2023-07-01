@@ -24,7 +24,7 @@ def test_read_bvals_bvecs():
     npt.assert_array_equal(bvals_none, gt.bvals)
 
     # Test for error raising with unknown file formats:
-    nan_fbvecs = osp.splitext(fbvecs)[0] + '.nan'  # Nonsense extension
+    nan_fbvecs = f'{osp.splitext(fbvecs)[0]}.nan'
     npt.assert_raises(ValueError, read_bvals_bvecs, fbvals, nan_fbvecs)
     npt.assert_raises(ValueError, read_bvals_bvecs, bvals, nan_fbvecs)
     npt.assert_raises(ValueError, read_bvals_bvecs, fbvals, bvecs)

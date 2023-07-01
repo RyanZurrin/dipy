@@ -57,9 +57,7 @@ def axonal_water_fraction(dki_params, sphere='repulsion100', gtol=1e-2,
     """
     kt_max = kurtosis_maximum(dki_params, sphere=sphere, gtol=gtol, mask=mask)
 
-    awf = kt_max / (kt_max + 3)
-
-    return awf
+    return kt_max / (kt_max + 3)
 
 
 def diffusion_components(dki_params, sphere='repulsion100', awf=None,
@@ -116,18 +114,16 @@ def diffusion_components(dki_params, sphere='repulsion100', awf=None,
     # select voxels where to apply the single fiber model
     if mask is None:
         mask = np.ones(shape, dtype='bool')
-    else:
-        if mask.shape != shape:
-            raise ValueError("Mask is not the same shape as dki_params.")
-        else:
-            mask = np.array(mask, dtype=bool, copy=False)
+    elif mask.shape == shape:
+        mask = np.array(mask, dtype=bool, copy=False)
 
+    else:
+        raise ValueError("Mask is not the same shape as dki_params.")
     # check or compute awf values
     if awf is None:
         awf = axonal_water_fraction(dki_params, sphere=sphere, mask=mask)
-    else:
-        if awf.shape != shape:
-            raise ValueError("awf array is not the same shape as dki_params.")
+    elif awf.shape != shape:
+        raise ValueError("awf array is not the same shape as dki_params.")
 
     # Initialize hindered and restricted diffusion tensors
     edt_all = np.zeros(shape + (6,))
@@ -228,11 +224,7 @@ def dkimicro_prediction(params, gtab, S0=1):
     adce = params[..., 28:34]
     adci = params[..., 34:40]
 
-    if isinstance(S0, np.ndarray):
-        S0_vol = S0 * np.ones(params.shape[:-1])
-    else:
-        S0_vol = S0
-
+    S0_vol = S0 * np.ones(params.shape[:-1]) if isinstance(S0, np.ndarray) else S0
     # Process pred_sig for all data voxels
     index = ndindex(evals.shape[:-1])
     for v in index:
