@@ -97,8 +97,10 @@ def _vol_denoise(train, vol_idx, model, data_shape, alpha):
         model = model
 
     else:
-        e_s = "The `solver` key-word argument needs to be: "
-        e_s += "'ols', 'ridge', 'lasso' or a "
+        e_s = (
+            "The `solver` key-word argument needs to be: "
+            + "'ols', 'ridge', 'lasso' or a "
+        )
         e_s += "`dipy.optimize.SKLearnLinearSolver` object"
         raise ValueError(e_s)
 
@@ -238,7 +240,7 @@ def patch2self(data, bvals, patch_radius=(0, 0, 0), model='ols',
 
     patch_radius = np.asarray(patch_radius, dtype=int)
 
-    if not data.ndim == 4:
+    if data.ndim != 4:
         raise ValueError("Patch2Self can only denoise on 4D arrays.",
                          data.shape)
 
@@ -250,13 +252,7 @@ def patch2self(data, bvals, patch_radius=(0, 0, 0), model='ols',
         out_dtype = data.dtype
 
     # We retain float64 precision, iff the input is in this precision:
-    if data.dtype == np.float64:
-        calc_dtype = np.float64
-
-    # Otherwise, we'll calculate things in float32 (saving memory)
-    else:
-        calc_dtype = np.float32
-
+    calc_dtype = np.float64 if data.dtype == np.float64 else np.float32
     # Segregates volumes by b0 threshold
     b0_idx = np.argwhere(bvals <= b0_threshold)
     dwi_idx = np.argwhere(bvals > b0_threshold)
@@ -338,11 +334,10 @@ def patch2self(data, bvals, patch_radius=(0, 0, 0), model='ols',
             shift = np.min(data[..., i]) - np.min(denoised_arr[..., i])
             denoised_arr[..., i] = denoised_arr[..., i] + shift
 
-    # clip out the negative values from the denoised output
     elif clip_negative_vals and not shift_intensity:
         denoised_arr.clip(min=0, out=denoised_arr)
 
-    elif clip_negative_vals and shift_intensity:
+    elif clip_negative_vals:
         warn('Both `clip_negative_vals` and `shift_intensity` cannot be True.')
         warn('Defaulting to `clip_negative_bvals`...')
         denoised_arr.clip(min=0, out=denoised_arr)

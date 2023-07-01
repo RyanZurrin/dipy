@@ -61,7 +61,7 @@ class install_scripts_bat(install_scripts):
 
     def run(self):
         install_scripts.run(self)
-        if not os.name == "nt":
+        if os.name != "nt":
             return
         for filepath in self.get_outputs():
             # If we can find an executable name in the #! top line of the script
@@ -73,9 +73,9 @@ class install_scripts_bat(install_scripts):
                 continue
             pth, fname = psplit(filepath)
             froot, ext = splitext(fname)
-            bat_file = pjoin(pth, froot + '.bat')
+            bat_file = pjoin(pth, f'{froot}.bat')
             bat_contents = BAT_TEMPLATE.replace('{FNAME}', fname)
-            log.info("Making %s wrapper for %s" % (bat_file, filepath))
+            log.info(f"Making {bat_file} wrapper for {filepath}")
             if self.dry_run:
                 continue
             with open(bat_file, 'wt') as fobj:

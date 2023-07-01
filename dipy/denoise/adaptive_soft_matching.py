@@ -71,10 +71,7 @@ def adaptive_soft_matching(ima, fimau, fimao, sigma):
         tmp = tmp[:(s[0] // 2), :(s[1] // 2), :(s[2] // 2)]
         sigY = np.std(tmp, ddof=1)
         sigX = (sigY * sigY) - sigma * sigma
-        if sigX < 0:
-            T = abs(w3[0][i]).max()
-        else:
-            T = (sigma * sigma) / (sigX**0.5)
+        T = abs(w3[0][i]).max() if sigX < 0 else (sigma * sigma) / (sigX**0.5)
         w3[0][i] = abs(w3[0][i])
         dist = np.array(w3[0][i]) - T
         dist = np.exp(-0.01 * dist)

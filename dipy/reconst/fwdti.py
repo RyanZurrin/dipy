@@ -119,7 +119,7 @@ class FreeWaterTensorModel(ReconstModel):
             try:
                 fit_method = common_fit_methods[fit_method]
             except KeyError:
-                e_s = '"' + str(fit_method) + '" is not a known fit '
+                e_s = f'"{str(fit_method)}" is not a known fit '
                 e_s += 'method, the fit method should either be a '
                 e_s += 'function or one of the common fit methods'
                 raise ValueError(e_s)
@@ -294,7 +294,7 @@ def wls_iter(design_matrix, sig, S0, Diso=3e-3, mdreg=2.7e-3,
         flow = 0  # lower f evaluated
         fhig = 1  # higher f evaluated
         ns = 9  # initial number of samples per iteration
-        for p in range(piterations):
+        for _ in range(piterations):
             df = df * 0.1
             fs = np.linspace(flow+df, fhig-df, num=ns)  # sampling f
             SFW = np.array([fwsig, ]*ns)  # repeat contributions for all values
@@ -385,11 +385,11 @@ def wls_fit_tensor(gtab, data, Diso=3e-3, mask=None, min_signal=1.0e-6,
     # Prepare mask
     if mask is None:
         mask = np.ones(data.shape[:-1], dtype=bool)
-    else:
-        if mask.shape != data.shape[:-1]:
-            raise ValueError("Mask is not the same shape as data.")
+    elif mask.shape == data.shape[:-1]:
         mask = np.array(mask, dtype=bool, copy=False)
 
+    else:
+        raise ValueError("Mask is not the same shape as data.")
     # Prepare S0
     S0 = np.mean(data[:, :, :, gtab.b0s_mask], axis=-1)
 
@@ -450,11 +450,7 @@ def _nls_err_func(tensor_elements, design_matrix, data, Diso=3e-3,
     if cholesky:
         tensor[:6] = cholesky_to_lower_triangular(tensor[:6])
 
-    if f_transform:
-        f = 0.5 * (1 + np.sin(tensor[7] - np.pi/2))
-    else:
-        f = tensor[7]
-
+    f = 0.5 * (1 + np.sin(tensor[7] - np.pi/2)) if f_transform else tensor[7]
     # This is the predicted signal given the params:
     y = (1-f) * np.exp(np.dot(design_matrix, tensor[:7])) + \
         f * np.exp(np.dot(design_matrix,
@@ -472,8 +468,7 @@ def _nls_err_func(tensor_elements, design_matrix, data, Diso=3e-3,
     # suggested by Chang et al.) we will use it:
     if weighting == 'sigma':
         if sigma is None:
-            e_s = "Must provide sigma value as input to use this weighting"
-            e_s += " method"
+            e_s = "Must provide sigma value as input to use this weighting" + " method"
             raise ValueError(e_s)
         w = 1/(sigma**2)
 
@@ -519,11 +514,7 @@ def _nls_jacobian_func(tensor_elements, design_matrix, data, Diso=3e-3,
         Default: True
     """
     tensor = np.copy(tensor_elements)
-    if f_transform:
-        f = 0.5 * (1 + np.sin(tensor[7] - np.pi/2))
-    else:
-        f = tensor[7]
-
+    f = 0.5 * (1 + np.sin(tensor[7] - np.pi/2)) if f_transform else tensor[7]
     t = np.exp(np.dot(design_matrix, tensor[:7]))
     s = np.exp(np.dot(design_matrix,
                       np.array([Diso, 0, Diso, 0, 0, Diso, tensor[6]])))
@@ -531,10 +522,7 @@ def _nls_jacobian_func(tensor_elements, design_matrix, data, Diso=3e-3,
     S = np.zeros(design_matrix.shape)
     S[:, 6] = f * s
 
-    if f_transform:
-        df = (t-s) * (0.5*np.cos(tensor[7]-np.pi/2))
-    else:
-        df = (t-s)
+    df = (t-s) * (0.5*np.cos(tensor[7]-np.pi/2)) if f_transform else (t-s)
     return np.concatenate((T - S, df[:, None]), axis=1)
 
 
@@ -613,11 +601,7 @@ def nls_iter(design_matrix, sig, S0, Diso=3e-3, mdreg=2.7e-3,
             dt = lower_triangular_to_cholesky(dt)
 
         # f transformation if requested
-        if f_transform:
-            f = np.arcsin(2*params[12] - 1) + np.pi/2
-        else:
-            f = params[12]
-
+        f = np.arcsin(2*params[12] - 1) + np.pi/2 if f_transform else params[12]
         # Use the Levenberg-Marquardt algorithm wrapped in opt.leastsq
         start_params = np.concatenate((dt, [-np.log(S0), f]), axis=0)
         if jac:
@@ -717,11 +701,11 @@ def nls_fit_tensor(gtab, data, mask=None, Diso=3e-3, mdreg=2.7e-3,
     # Prepare mask
     if mask is None:
         mask = np.ones(data.shape[:-1], dtype=bool)
-    else:
-        if mask.shape != data.shape[:-1]:
-            raise ValueError("Mask is not the same shape as data.")
+    elif mask.shape == data.shape[:-1]:
         mask = np.array(mask, dtype=bool, copy=False)
 
+    else:
+        raise ValueError("Mask is not the same shape as data.")
     # Prepare S0
     S0 = np.mean(data[:, :, :, gtab.b0s_mask], axis=-1)
 

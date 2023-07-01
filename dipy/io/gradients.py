@@ -51,7 +51,7 @@ def read_bvals_bvecs(fbvals, fbvecs):
         elif ext == '.npy':
             vals.append(np.squeeze(np.load(this_fname)))
         else:
-            e_s = "File type %s is not recognized" % ext
+            e_s = f"File type {ext} is not recognized"
             raise ValueError(e_s)
 
     # Once out of the loop, unpack them:
@@ -66,8 +66,10 @@ def read_bvals_bvecs(fbvals, fbvecs):
     if bvecs.ndim != 2:
         bvecs = bvecs[None, ...]
         bvals = bvals[None, ...]
-        msg = "Detected only 1 direction on your bvec file. For diffusion "
-        msg += "dataset, it is recommended to have at least 3 directions."
+        msg = (
+            "Detected only 1 direction on your bvec file. For diffusion "
+            + "dataset, it is recommended to have at least 3 directions."
+        )
         msg += "You may have problems during the reconstruction step."
         warnings.warn(msg)
     if bvecs.shape[1] != 3:

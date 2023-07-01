@@ -42,9 +42,7 @@ def _positive_evals(L1, L2, L3, er=2e-7):
         zero.
 
     """
-    ind = np.logical_and(L1 > er, np.logical_and(L2 > er, L3 > er))
-
-    return ind
+    return np.logical_and(L1 > er, np.logical_and(L2 > er, L3 > er))
 
 
 def carlson_rf(x, y, z, errtol=3e-4):
@@ -99,7 +97,7 @@ def carlson_rf(x, y, z, errtol=3e-4):
             ynroot = np.sqrt(yn[v])
             znroot = np.sqrt(zn[v])
             lamda = xnroot * (ynroot + znroot) + ynroot * znroot
-            n = n + 1
+            n += 1
             xn[v] = (xn[v] + lamda) * 0.250
             yn[v] = (yn[v] + lamda) * 0.250
             zn[v] = (zn[v] + lamda) * 0.250
@@ -111,10 +109,9 @@ def carlson_rf(x, y, z, errtol=3e-4):
     Z = - X - Y
     E2 = X * Y - Z * Z
     E3 = X * Y * Z
-    RF = An**(-1 / 2.) * \
-        (1 - E2 / 10. + E3 / 14. + (E2**2) / 24. - 3 / 44. * E2 * E3)
-
-    return RF
+    return An ** (-1 / 2.0) * (
+        1 - E2 / 10.0 + E3 / 14.0 + (E2**2) / 24.0 - 3 / 44.0 * E2 * E3
+    )
 
 
 def carlson_rd(x, y, z, errtol=1e-4):
@@ -183,13 +180,20 @@ def carlson_rd(x, y, z, errtol=1e-4):
     E3 = (3. * X * Y - 8. * Z * Z) * Z
     E4 = 3. * (X * Y - Z * Z) * Z**2.
     E5 = X * Y * Z**3.
-    RD = \
-        4**(-n) * An**(-3 / 2.) * \
-        (1 - 3 / 14. * E2 + 1 / 6. * E3 +
-         9 / 88. * (E2**2) - 3 / 22. * E4 - 9 / 52. * E2 * E3 +
-         3 / 26. * E5) + 3 * sum_term
-
-    return RD
+    return (
+        4 ** (-n)
+        * An ** (-3 / 2.0)
+        * (
+            1
+            - 3 / 14.0 * E2
+            + 1 / 6.0 * E3
+            + 9 / 88.0 * (E2**2)
+            - 3 / 22.0 * E4
+            - 9 / 52.0 * E2 * E3
+            + 3 / 26.0 * E5
+        )
+        + 3 * sum_term
+    )
 
 
 def _F1m(a, b, c):
@@ -456,24 +460,23 @@ def directional_diffusion_variance(kt, V, min_kurtosis=-3/7):
            novel biomarkers, NeuroImage 111: 85-99
 
     """
-    adv = \
-        V[:, 0] * V[:, 0] * V[:, 0] * V[:, 0] * kt[0] + \
-        V[:, 1] * V[:, 1] * V[:, 1] * V[:, 1] * kt[1] + \
-        V[:, 2] * V[:, 2] * V[:, 2] * V[:, 2] * kt[2] + \
-        4 * V[:, 0] * V[:, 0] * V[:, 0] * V[:, 1] * kt[3] + \
-        4 * V[:, 0] * V[:, 0] * V[:, 0] * V[:, 2] * kt[4] + \
-        4 * V[:, 0] * V[:, 1] * V[:, 1] * V[:, 1] * kt[5] + \
-        4 * V[:, 1] * V[:, 1] * V[:, 1] * V[:, 2] * kt[6] + \
-        4 * V[:, 0] * V[:, 2] * V[:, 2] * V[:, 2] * kt[7] + \
-        4 * V[:, 1] * V[:, 2] * V[:, 2] * V[:, 2] * kt[8] + \
-        6 * V[:, 0] * V[:, 0] * V[:, 1] * V[:, 1] * kt[9] + \
-        6 * V[:, 0] * V[:, 0] * V[:, 2] * V[:, 2] * kt[10] + \
-        6 * V[:, 1] * V[:, 1] * V[:, 2] * V[:, 2] * kt[11] + \
-        12 * V[:, 0] * V[:, 0] * V[:, 1] * V[:, 2] * kt[12] + \
-        12 * V[:, 0] * V[:, 1] * V[:, 1] * V[:, 2] * kt[13] + \
-        12 * V[:, 0] * V[:, 1] * V[:, 2] * V[:, 2] * kt[14]
-
-    return adv
+    return (
+        V[:, 0] * V[:, 0] * V[:, 0] * V[:, 0] * kt[0]
+        + V[:, 1] * V[:, 1] * V[:, 1] * V[:, 1] * kt[1]
+        + V[:, 2] * V[:, 2] * V[:, 2] * V[:, 2] * kt[2]
+        + 4 * V[:, 0] * V[:, 0] * V[:, 0] * V[:, 1] * kt[3]
+        + 4 * V[:, 0] * V[:, 0] * V[:, 0] * V[:, 2] * kt[4]
+        + 4 * V[:, 0] * V[:, 1] * V[:, 1] * V[:, 1] * kt[5]
+        + 4 * V[:, 1] * V[:, 1] * V[:, 1] * V[:, 2] * kt[6]
+        + 4 * V[:, 0] * V[:, 2] * V[:, 2] * V[:, 2] * kt[7]
+        + 4 * V[:, 1] * V[:, 2] * V[:, 2] * V[:, 2] * kt[8]
+        + 6 * V[:, 0] * V[:, 0] * V[:, 1] * V[:, 1] * kt[9]
+        + 6 * V[:, 0] * V[:, 0] * V[:, 2] * V[:, 2] * kt[10]
+        + 6 * V[:, 1] * V[:, 1] * V[:, 2] * V[:, 2] * kt[11]
+        + 12 * V[:, 0] * V[:, 0] * V[:, 1] * V[:, 2] * kt[12]
+        + 12 * V[:, 0] * V[:, 1] * V[:, 1] * V[:, 2] * kt[13]
+        + 12 * V[:, 0] * V[:, 1] * V[:, 2] * V[:, 2] * kt[14]
+    )
 
 
 def directional_kurtosis(dt, md, kt, V, min_diffusivity=0, min_kurtosis=-3/7,
@@ -1312,9 +1315,8 @@ def kurtosis_maximum(dki_params, sphere='repulsion100', gtol=1e-2,
     # select voxels where to find fiber directions
     if mask is None:
         mask = np.ones(shape, dtype='bool')
-    else:
-        if mask.shape != shape:
-            raise ValueError("Mask is not the same shape as dki_params.")
+    elif mask.shape != shape:
+        raise ValueError("Mask is not the same shape as dki_params.")
 
     evals, evecs, kt = split_dki_param(dki_params)
 
@@ -1522,19 +1524,13 @@ def dki_prediction(dki_params, gtab, S0=1.):
     fevecs = evecs.reshape((-1,) + evecs.shape[-2:])
     fkt = kt.reshape((-1, kt.shape[-1]))
     pred_sig = np.zeros((len(fevals), len(gtab.bvals)))
-    if isinstance(S0, np.ndarray):
-        S0_vol = np.reshape(S0, (len(fevals)))
-    else:
-        S0_vol = S0
+    S0_vol = np.reshape(S0, (len(fevals))) if isinstance(S0, np.ndarray) else S0
     # looping for all voxels
     for v in range(len(pred_sig)):
         DT = np.dot(np.dot(fevecs[v], np.diag(fevals[v])), fevecs[v].T)
         dt = lower_triangular(DT)
         MD = (dt[0] + dt[2] + dt[5]) / 3
-        if isinstance(S0_vol, np.ndarray):
-            this_S0 = S0_vol[v]
-        else:
-            this_S0 = S0_vol
+        this_S0 = S0_vol[v] if isinstance(S0_vol, np.ndarray) else S0_vol
         X = np.concatenate((dt, fkt[v] * MD * MD,
                             np.array([-np.log(this_S0)])),
                            axis=0)
@@ -1582,17 +1578,20 @@ class DiffusionKurtosisModel(ReconstModel):
             try:
                 self.fit_method = common_fit_methods[fit_method]
             except KeyError:
-                raise ValueError('"' + str(fit_method) + '" is not a known '
-                                 'fit method, the fit method should either be '
-                                 'a function or one of the common fit methods')
+                raise ValueError(
+                    (
+                        f'"{str(fit_method)}' + '" is not a known '
+                        'fit method, the fit method should either be '
+                        'a function or one of the common fit methods'
+                    )
+                )
 
         self.design_matrix = design_matrix(self.gtab)
         self.args = args
         self.kwargs = kwargs
         self.min_signal = self.kwargs.pop('min_signal', None)
         if self.min_signal is not None and self.min_signal <= 0:
-            e_s = "The `min_signal` key-word argument needs to be strictly"
-            e_s += " positive."
+            e_s = "The `min_signal` key-word argument needs to be strictly" + " positive."
             raise ValueError(e_s)
 
         # Check if at least three b-values are given
@@ -2158,11 +2157,9 @@ def _ols_iter(inv_design, sig, min_diffusivity):
     MD_square = (evals.mean(0))**2
     KT_elements = result[6:21] / MD_square
 
-    # Write output
-    dki_params = np.concatenate((evals, evecs[0], evecs[1], evecs[2],
-                                 KT_elements), axis=0)
-
-    return dki_params
+    return np.concatenate(
+        (evals, evecs[0], evecs[1], evecs[2], KT_elements), axis=0
+    )
 
 
 def ols_fit_dki(design_matrix, data):
@@ -2275,11 +2272,9 @@ def _wls_iter(design_matrix, inv_design, sig, min_diffusivity):
     MD_square = (evals.mean(0))**2
     KT_elements = wls_result[6:21] / MD_square
 
-    # Write output
-    dki_params = np.concatenate((evals, evecs[0], evecs[1], evecs[2],
-                                 KT_elements), axis=0)
-
-    return dki_params
+    return np.concatenate(
+        (evals, evecs[0], evecs[1], evecs[2], KT_elements), axis=0
+    )
 
 
 def wls_fit_dki(design_matrix, data):

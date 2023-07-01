@@ -10,6 +10,7 @@ With Pytest, Run this benchmark with:
     pytest -svv -c bench.ini /path/to/bench_sphere.py
 """
 
+
 import sys
 import time
 
@@ -19,9 +20,7 @@ import dipy.core.sphere as sphere
 from matplotlib import pyplot as plt
 
 
-mode = None
-if len(sys.argv) > 1 and sys.argv[1] == '-s':
-    mode = "subdivide"
+mode = "subdivide" if len(sys.argv) > 1 and sys.argv[1] == '-s' else None
 
 class Timer(object):
     def __enter__(self):
@@ -51,10 +50,10 @@ def bench_disperse_charges_alt():
     figsize = (1920/dpi, 1080/dpi)
     fig = plt.figure(num='Electrostatic repulsion methods benchmark',
                      figsize=figsize, dpi=dpi)
-    for (idx, subplot_index) in enumerate(['131', '132', '133']):
-        num_repetitions = 20
-        num_trials = 3
+    num_repetitions = 20
+    num_trials = 3
 
+    for (idx, subplot_index) in enumerate(['131', '132', '133']):
         execution_time_adhoc = []
         execution_time_scipy = []
         minimum_adhoc = []
@@ -68,10 +67,10 @@ def bench_disperse_charges_alt():
             init_pointset = sphere_stats.random_uniform_on_sphere(
                 num_points[idx])
             init_hemisphere = sphere.HemiSphere(xyz=init_pointset)
-        print('num_points = {}'.format(init_pointset.shape[0]))
+        print(f'num_points = {init_pointset.shape[0]}')
 
         for j in range(num_trials):
-            print('  Iteration {}/{}'.format(j + 1, num_trials))
+            print(f'  Iteration {j + 1}/{num_trials}')
 
             for num_iterations in range(12):
                 # The time of an iteration of disperse charges is much
@@ -81,7 +80,7 @@ def bench_disperse_charges_alt():
                 # Measure execution time for dipy.core.sphere.disperse_charges
                 timer = Timer()
                 with timer:
-                    for i in range(num_repetitions):
+                    for _ in range(num_repetitions):
                         opt = func_minimize_adhoc(init_hemisphere,
                                                   num_iterations_dipy)
                 execution_time_adhoc.append(timer.duration_in_seconds() /
@@ -92,7 +91,7 @@ def bench_disperse_charges_alt():
                 # dipy.core.sphere.disperse_charges_alt
                 timer = Timer()
                 with timer:
-                    for i in range(num_repetitions):
+                    for _ in range(num_repetitions):
                         opt = func_minimize_scipy(init_pointset, num_iterations)
                 execution_time_scipy.append(timer.duration_in_seconds() /
                                             num_repetitions)
@@ -108,9 +107,9 @@ def bench_disperse_charges_alt():
         plt.xlabel('Average execution time (s)')
         plt.ylabel('Objective function value')
         if mode == 'subdivide':
-            plt.title('Num subdiv: {}'.format(num_subdivide[idx]))
+            plt.title(f'Num subdiv: {num_subdivide[idx]}')
         else:
-            plt.title('Num points: {}'.format(num_points[idx]))
+            plt.title(f'Num points: {num_points[idx]}')
         plt.legend()
 
     plt.show()

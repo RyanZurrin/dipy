@@ -167,10 +167,7 @@ class Optimizer(object):
 
     @property
     def evolution(self):
-        if self._evol_kx is not None:
-            return np.asarray(self._evol_kx)
-        else:
-            return None
+        return np.asarray(self._evol_kx) if self._evol_kx is not None else None
 
 
 def spdot(A, B):
@@ -482,8 +479,10 @@ class PositiveDefiniteLeastSquares:
         try:
             X = np.linalg.cholesky(np.dot(design_matrix.T, design_matrix)).T
         except np.linalg.linalg.LinAlgError:
-            msg = 'Cholesky decomposition failed, returning zero array. Verify '
-            msg += 'that the data is sufficient to estimate the model '
+            msg = (
+                'Cholesky decomposition failed, returning zero array. Verify '
+                + 'that the data is sufficient to estimate the model '
+            )
             msg += 'parameters, and that the design matrix has full rank.'
             warnings.warn(msg)
             return self._zeros
@@ -502,7 +501,7 @@ class PositiveDefiniteLeastSquares:
                 # Return zeros if optimization failed
                 status = self.unconstrained_problem.status
                 if status != 'optimal':
-                    msg = 'Solver failed to produce an optimum: %s.' % status
+                    msg = f'Solver failed to produce an optimum: {status}.'
                     warnings.warn(msg)
                     msg = 'Optimization failed, returning zero array.'
                     warnings.warn(msg)
@@ -520,7 +519,7 @@ class PositiveDefiniteLeastSquares:
             # Show warning if solution is not optimal
             status = self.problem.status
             if status != 'optimal':
-                msg = 'Solver failed to produce an optimum: %s.' % status
+                msg = f'Solver failed to produce an optimum: {status}.'
                 warnings.warn(msg)
 
             # Return solution

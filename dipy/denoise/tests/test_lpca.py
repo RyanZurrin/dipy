@@ -86,12 +86,11 @@ def rfiw_phantom(gtab, snr=None):
 
     if snr is None:
         return DWI
-    else:
-        sigma = S2 * 1.0 / snr
-        n1 = np.random.normal(0, sigma, size=DWI.shape)
-        n2 = np.random.normal(0, sigma, size=DWI.shape)
-        return [np.sqrt((DWI / np.sqrt(2) + n1)**2 +
-                        (DWI / np.sqrt(2) + n2)**2), sigma]
+    sigma = S2 * 1.0 / snr
+    n1 = np.random.normal(0, sigma, size=DWI.shape)
+    n2 = np.random.normal(0, sigma, size=DWI.shape)
+    return [np.sqrt((DWI / np.sqrt(2) + n1)**2 +
+                    (DWI / np.sqrt(2) + n2)**2), sigma]
 
 
 def test_lpca_static():

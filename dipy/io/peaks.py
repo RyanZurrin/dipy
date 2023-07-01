@@ -141,8 +141,7 @@ def save_peaks(fname, pam, affine=None, verbose=False):
     if not (hasattr(pam, 'peak_dirs') and hasattr(pam, 'peak_values') and
             hasattr(pam, 'peak_indices')):
 
-        msg = 'Cannot save object without peak_dirs, peak_values'
-        msg += ' and peak_indices'
+        msg = 'Cannot save object without peak_dirs, peak_values' + ' and peak_indices'
         raise ValueError(msg)
 
     f = h5py.File(fname, 'w')

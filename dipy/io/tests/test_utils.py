@@ -13,10 +13,8 @@ from nibabel import Nifti1Image, save
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal, assert_
 
-filepath_dix = {}
 files, folder = fetch_gold_standard_io()
-for filename in files:
-    filepath_dix[filename] = os.path.join(folder, filename)
+filepath_dix = {filename: os.path.join(folder, filename) for filename in files}
 
 
 def test_decfa():
@@ -145,7 +143,7 @@ def test_read_img_arr_or_path():
     aff = np.eye(4)
     aff[:3, :] = np.random.randn(3, 4)
     img = Nifti1Image(data, aff)
-    path = tempfile.NamedTemporaryFile().name + '.nii.gz'
+    path = f'{tempfile.NamedTemporaryFile().name}.nii.gz'
     save(img, path)
     for this in [data, img, path]:
         dd, aa = read_img_arr_or_path(this, affine=aff)

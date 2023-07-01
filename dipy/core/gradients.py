@@ -45,10 +45,7 @@ def unique_bvals(bvals, bmag=None, rbvals=False):
         Array containing the rounded unique b-values
     """
     b = round_bvals(bvals, bmag)
-    if rbvals:
-        return np.unique(b), b
-
-    return np.unique(b)
+    return (np.unique(b), b) if rbvals else np.unique(b)
 
 
 class GradientTable(object):
@@ -130,9 +127,9 @@ class GradientTable(object):
                 elif btens == 'CTE':
                     b_tensor = cigar_tensor
                 else:
-                    raise ValueError("%s is an invalid value for btens. "%btens
-                                     + "Please provide one of the following: "
-                                     + "'LTE', 'PTE', 'STE', 'CTE'.")
+                    raise ValueError(
+                        f"{btens} is an invalid value for btens. Please provide one of the following: 'LTE', 'PTE', 'STE', 'CTE'."
+                    )
                 for i, (bvec, bval) in enumerate(zip(self.bvecs, self.bvals)):
                     if btens == 'STE':
                         b_tensors[i] = b_tensor * bval
@@ -141,10 +138,11 @@ class GradientTable(object):
                         b_tensors[i] = (np.matmul(np.matmul(R, b_tensor), R.T)
                                         * bval)
                 self.btens = b_tensors
-            elif (isinstance(btens, np.ndarray) and (btens.shape ==
-                    (gradients.shape[0],) or (btens.shape ==
-                    (gradients.shape[0], 1)) or (btens.shape == (1,
-                    gradients.shape[0])))):
+            elif isinstance(btens, np.ndarray) and btens.shape in [
+                (gradients.shape[0],),
+                (gradients.shape[0], 1),
+                (1, gradients.shape[0]),
+            ]:
                 b_tensors = np.zeros((len(self.bvals), 3, 3))
                 if btens.shape == (1, gradients.shape[0]):
                     btens = btens.reshape((gradients.shape[0], 1))
@@ -163,18 +161,16 @@ class GradientTable(object):
                                         R.T) * bval)
                     else:
                         raise ValueError(
-                                "%s is an invalid value in btens. "%btens[i]
-                                + "Array element options: 'LTE', 'PTE', 'STE', "
-                                + "'CTE'.")
+                            f"{btens[i]} is an invalid value in btens. Array element options: 'LTE', 'PTE', 'STE', 'CTE'."
+                        )
                 self.btens = b_tensors
             elif (isinstance(btens, np.ndarray) and btens.shape ==
                     (gradients.shape[0], 3, 3)):
                 self.btens = btens
             else:
-                raise ValueError("%s is an invalid value for btens. "%btens
-                                 + "Please provide a string, an array of "
-                                 + "strings, or an array of exact b-tensors. "
-                                 + "String options: 'LTE', 'PTE', 'STE', 'CTE'")
+                raise ValueError(
+                    f"{btens} is an invalid value for btens. Please provide a string, an array of strings, or an array of exact b-tensors. String options: 'LTE', 'PTE', 'STE', 'CTE'"
+                )
         else:
             self.btens = None
 
@@ -195,9 +191,7 @@ class GradientTable(object):
     def gradient_strength(self):
         tau = self.big_delta - self.small_delta / 3.0
         qvals = np.sqrt(self.bvals / tau) / (2 * np.pi)
-        gradient_strength = (qvals * (2 * np.pi) /
-                             (self.small_delta * WATER_GYROMAGNETIC_RATIO))
-        return gradient_strength
+        return qvals * (2 * np.pi) / (self.small_delta * WATER_GYROMAGNETIC_RATIO)
 
     @auto_attr
     def b0s_mask(self):
@@ -217,10 +211,12 @@ class GradientTable(object):
         show(self.__str__())
 
     def __str__(self):
-        msg = 'B-values shape {}\n'.format(self.bvals.shape)
-        msg += '         min {:f}\n'.format(self.bvals.min())
+        msg = (
+            f'B-values shape {self.bvals.shape}\n'
+            + '         min {:f}\n'.format(self.bvals.min())
+        )
         msg += '         max {:f}\n'.format(self.bvals.max())
-        msg += 'B-vectors shape {}\n'.format(self.bvecs.shape)
+        msg += f'B-vectors shape {self.bvecs.shape}\n'
         msg += '          min {:f}\n'.format(self.bvecs.min())
         msg += '          max {:f}\n'.format(self.bvecs.max())
         return msg
@@ -389,7 +385,7 @@ def gradient_table_from_qvals_bvecs(qvals, bvecs, big_delta, small_delta,
     qvals = np.asarray(qvals)
     bvecs = np.asarray(bvecs)
 
-    if (bvecs.shape[1] > bvecs.shape[0]) and bvecs.shape[0] > 1:
+    if bvecs.shape[1] > bvecs.shape[0] > 1:
         bvecs = bvecs.T
     bvals = (qvals * 2 * np.pi) ** 2 * (big_delta - small_delta / 3.)
     return gradient_table_from_bvals_bvecs(bvals, bvecs, big_delta=big_delta,
@@ -466,7 +462,7 @@ def gradient_table_from_gradient_strength_bvecs(gradient_strength, bvecs,
     """
     gradient_strength = np.asarray(gradient_strength)
     bvecs = np.asarray(bvecs)
-    if (bvecs.shape[1] > bvecs.shape[0]) and bvecs.shape[0] > 1:
+    if bvecs.shape[1] > bvecs.shape[0] > 1:
         bvecs = bvecs.T
     qvals = gradient_strength * small_delta * WATER_GYROMAGNETIC_RATIO /\
         (2 * np.pi)
@@ -594,7 +590,7 @@ def gradient_table(bvals, bvecs=None, big_delta=None, small_delta=None,
                              " array containing both bvals and bvecs")
     else:
         bvecs = np.asarray(bvecs)
-        if (bvecs.shape[1] > bvecs.shape[0]) and bvecs.shape[0] > 1:
+        if bvecs.shape[1] > bvecs.shape[0] > 1:
             bvecs = bvecs.T
     return gradient_table_from_bvals_bvecs(bvals, bvecs, big_delta=big_delta,
                                            small_delta=small_delta,
@@ -636,8 +632,10 @@ def reorient_bvecs(gtab, affines, atol=1e-2):
     new_bvecs = gtab.bvecs[~gtab.b0s_mask]
 
     if new_bvecs.shape[0] != len(affines):
-        e_s = "Number of affine transformations must match number of "
-        e_s += "non-zero gradients"
+        e_s = (
+            "Number of affine transformations must match number of "
+            + "non-zero gradients"
+        )
         raise ValueError(e_s)
 
     for i, aff in enumerate(affines):
@@ -683,8 +681,7 @@ def generate_bvecs(N, iters=5000):
     phi = 2 * np.pi * np.random.rand(N)
     hsph_initial = HemiSphere(theta=theta, phi=phi)
     hsph_updated, potential = disperse_charges(hsph_initial, iters)
-    bvecs = hsph_updated.vertices
-    return bvecs
+    return hsph_updated.vertices
 
 
 def round_bvals(bvals, bmag=None):
@@ -736,26 +733,18 @@ def unique_bvals_tolerance(bvals, tol=20):
         for each cluster
     """
     b = np.unique(bvals)
-    ubvals = []
     lower_part = np.where(b <= b[0] + tol)[0]
     upper_part = np.where(np.logical_and(b <= b[lower_part[-1]] + tol,
                                          b > b[lower_part[-1]]))[0]
-    ubvals.append(b[lower_part[-1]])
-    if len(upper_part) != 0:
-        b_index = upper_part[-1] + 1
-    else:
-        b_index = lower_part[-1] + 1
+    ubvals = [b[lower_part[-1]]]
+    b_index = upper_part[-1] + 1 if len(upper_part) != 0 else lower_part[-1] + 1
     while b_index != len(b):
         lower_part = np.where(np.logical_and(b <= b[b_index] + tol,
                                              b > b[b_index-1]))[0]
         upper_part = np.where(np.logical_and(b <= b[lower_part[-1]] + tol,
                                              b > b[lower_part[-1]]))[0]
         ubvals.append(b[lower_part[-1]])
-        if len(upper_part) != 0:
-            b_index = upper_part[-1] + 1
-        else:
-            b_index = lower_part[-1] + 1
-
+        b_index = upper_part[-1] + 1 if len(upper_part) != 0 else lower_part[-1] + 1
     # Checking for overlap with get_bval_indices
     for i, ubval in enumerate(ubvals[:-1]):
         indices_1 = get_bval_indices(bvals, ubval, tol)
@@ -816,10 +805,7 @@ def unique_bvals_magnitude(bvals, bmag=None, rbvals=False):
         Array containing the rounded unique b-values
     """
     b = round_bvals(bvals, bmag)
-    if rbvals:
-        return np.unique(b), b
-
-    return np.unique(b)
+    return (np.unique(b), b) if rbvals else np.unique(b)
 
 
 def check_multi_b(gtab, n_bvals, non_zero=True, bmag=None):
@@ -852,10 +838,7 @@ def check_multi_b(gtab, n_bvals, non_zero=True, bmag=None):
         bvals = bvals[~gtab.b0s_mask]
 
     uniqueb = unique_bvals_magnitude(bvals, bmag=bmag)
-    if uniqueb.shape[0] < n_bvals:
-        return False
-    else:
-        return True
+    return uniqueb.shape[0] >= n_bvals
 
 
 def _btens_to_params_2d(btens_2d, ztol):
@@ -978,7 +961,7 @@ def btens_to_params(btens, ztol=1e-10):
     else:
         raise ValueError(value_error_msg)
 
-    if not btens_shape == (3, 3):
+    if btens_shape != (3, 3):
         raise ValueError(value_error_msg)
 
     # Reshape so that loop below works when only one input b-tensor is provided
@@ -1040,7 +1023,7 @@ def params_to_btens(bval, bdelta, b_eta):
 
     if not input_types_all_ok:
         s = [x.__name__ for x in expected_input_types]
-        it_msg = "All input types should any of: {}".format(s)
+        it_msg = f"All input types should any of: {s}"
         raise ValueError(it_msg)
 
     # Check input values within expected ranges
@@ -1055,9 +1038,7 @@ def params_to_btens(bval, bdelta, b_eta):
 
     m1 = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 2]])
     m2 = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 0]])
-    btens = bval/3*(np.eye(3)+bdelta*(m1+b_eta*m2))
-
-    return btens
+    return bval/3*(np.eye(3)+bdelta*(m1+b_eta*m2))
 
 
 def ornt_mapping(ornt1, ornt2):
@@ -1134,7 +1115,7 @@ def orientation_from_string(string_ornt):
     ornt = tuple(orientation_dict[ii] for ii in string_ornt.lower())
     ornt = np.array(ornt)
     if _check_ornt(ornt):
-        msg = string_ornt + " does not seem to be a valid orientation string"
+        msg = f"{string_ornt} does not seem to be a valid orientation string"
         raise ValueError(msg)
     return ornt
 
@@ -1142,14 +1123,11 @@ def orientation_from_string(string_ornt):
 def orientation_to_string(ornt):
     """Return a string representation of a 3d ornt."""
     if _check_ornt(ornt):
-        msg = repr(ornt) + " does not seem to be a valid orientation"
+        msg = f"{repr(ornt)} does not seem to be a valid orientation"
         raise ValueError(msg)
     orientation_dict = {(0, 1): 'r', (0, -1): 'l', (1, 1): 'a',
                         (1, -1): 'p', (2, 1): 's', (2, -1): 'i'}
-    ornt_string = ''
-    for ii in ornt:
-        ornt_string += orientation_dict[(ii[0], ii[1])]
-    return ornt_string
+    return ''.join(orientation_dict[(ii[0], ii[1])] for ii in ornt)
 
 
 def _check_ornt(ornt):

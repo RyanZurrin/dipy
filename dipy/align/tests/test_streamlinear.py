@@ -150,7 +150,7 @@ def test_rigid_partial_real_bundles():
 
     overlap = np.sum(np.logical_and(vol, vol2)) / float(np.sum(vol2))
 
-    assert_equal(overlap * 100 > 40, True)
+    assert_equal(overlap > 40 / 100, True)
 
 
 def test_stream_rigid():
@@ -258,7 +258,7 @@ def test_openmp_locks():
     moving = []
     pts = 20
 
-    for i in range(1000):
+    for _ in range(1000):
         s = np.random.rand(pts, 3)
         static.append(s)
         moving.append(s + 2)
@@ -438,7 +438,7 @@ def test_x0_input():
 
 def test_compose_decompose_matrix44():
 
-    for i in range(20):
+    for _ in range(20):
         x0 = np.random.rand(12)
         mat = compose_matrix44(x0[:6])
         assert_array_almost_equal(x0[:6], decompose_matrix44(mat, size=6))

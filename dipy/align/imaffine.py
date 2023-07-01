@@ -43,6 +43,7 @@
 
 """
 
+
 from warnings import warn
 
 import numpy as np
@@ -61,7 +62,7 @@ from dipy.align.scalespace import IsotropicScaleSpace
 from dipy.utils.deprecator import deprecated_params
 
 _interp_options = ['nearest', 'linear']
-_transform_method = dict()
+_transform_method = {}
 _transform_method[(2, 'nearest')] = vf.transform_2d_affine_nn
 _transform_method[(3, 'nearest')] = vf.transform_3d_affine_nn
 _transform_method[(2, 'linear')] = vf.transform_2d_affine
@@ -183,7 +184,7 @@ class AffineMap(object):
         if len(affine.shape) != _number_dim_affine_matrix:
             raise AffineInversionError('Affine transform must be 2D')
 
-        if not affine.shape[0] == affine.shape[1]:
+        if affine.shape[0] != affine.shape[1]:
             raise AffineInversionError("Affine transform must be a square "
                                        "matrix")
 
@@ -229,10 +230,8 @@ class AffineMap(object):
             format_spec = format_spec.lower()
             if format_spec in ['', ' ', 'f', 'full']:
                 return str(self.affine)
-            # rotation part only (initial 3x3)
             elif format_spec in ['r', 'rotation']:
                 return str(self.affine[:-1, :-1])
-            # translation part only (4th col)
             elif format_spec in ['t', 'translation']:
                 # notice unusual indexing to make it a column vector
                 #   i.e. rows from 0 to n-1, cols from n to n
@@ -241,10 +240,9 @@ class AffineMap(object):
                 allowed_formats_print_map = ['full', 'f',
                                              'rotation', 'r',
                                              'translation', 't']
-                raise NotImplementedError("Format {} not recognized or"
-                                          "implemented.\nTry one of {}"
-                                          .format(format_spec,
-                                                  allowed_formats_print_map))
+                raise NotImplementedError(
+                    f"Format {format_spec} not recognized orimplemented.\nTry one of {allowed_formats_print_map}"
+                )
 
     @deprecated_params('interp', 'interpolation', since='1.13', until='1.15')
     def _apply_transform(self, image, interpolation='linear',
@@ -306,7 +304,7 @@ class AffineMap(object):
         """
         # Verify valid interpolation requested
         if interpolation not in _interp_options:
-            msg = 'Unknown interpolation method: %s' % (interpolation,)
+            msg = f'Unknown interpolation method: {interpolation}'
             raise ValueError(msg)
 
         # Obtain sampling grid
@@ -342,16 +340,12 @@ class AffineMap(object):
                 image_grid2world = self.domain_grid2world
             else:
                 image_grid2world = self.codomain_grid2world
-            if image_grid2world is None:
-                image_grid2world = np.eye(dim + 1)
+        if image_grid2world is None:
+            image_grid2world = np.eye(dim + 1)
         image_world2grid = npl.inv(image_grid2world)
 
         # Compute the transform from sampling grid to input image grid
-        if apply_inverse:
-            aff = self.affine_inv
-        else:
-            aff = self.affine
-
+        aff = self.affine_inv if apply_inverse else self.affine
         if (aff is None) or resample_only:
             comp = image_world2grid.dot(sampling_grid2world)
         else:
@@ -360,9 +354,7 @@ class AffineMap(object):
         # Transform the input image
         if interpolation == 'linear':
             image = image.astype(np.float64)
-        transformed = _transform_method[(dim, interpolation)](image, shape,
-                                                              comp)
-        return transformed
+        return _transform_method[(dim, interpolation)](image, shape, comp)
 
     @deprecated_params('interp', 'interpolation', since='1.13', until='1.15')
     def transform(self, image, interpolation='linear', image_grid2world=None,
@@ -562,9 +554,9 @@ class MutualInformationMetric(object):
         self.moving_grid2world = moving_grid2world
         self.moving_world2grid = npl.inv(moving_grid2world)
         self.static_direction, self.static_spacing = \
-            get_direction_and_spacings(static_grid2world, self.dim)
+                get_direction_and_spacings(static_grid2world, self.dim)
         self.moving_direction, self.moving_spacing = \
-            get_direction_and_spacings(moving_grid2world, self.dim)
+                get_direction_and_spacings(moving_grid2world, self.dim)
         self.starting_affine = starting_affine
 
         P = np.eye(self.dim + 1)
@@ -575,13 +567,11 @@ class MutualInformationMetric(object):
                                     moving.shape, moving_grid2world)
 
         # Masks can only be used with dense sampling
-        if self.sampling_proportion in [None, 1.0]:
+        if self.sampling_proportion is None or self.sampling_proportion == 1.0:
 
-            if static_mask is not None:
-                self.static_mask = static_mask.astype(np.int32)
-            else:
-                self.static_mask = None
-
+            self.static_mask = (
+                static_mask.astype(np.int32) if static_mask is not None else None
+            )
             if moving_mask is not None:
                 self.moving_mask = moving_mask.astype(np.int32)
             else:
@@ -590,8 +580,10 @@ class MutualInformationMetric(object):
         else:
 
             if (static_mask is not None) or (moving_mask is not None):
-                wm = "Masking is not implemented for sampling_proportion < 1, "
-                wm = wm + "setting static_mask = None and moving_mask = None"
+                wm = (
+                    "Masking is not implemented for sampling_proportion < 1, "
+                    + "setting static_mask = None and moving_mask = None"
+                )
                 warn(wm, UserWarning)
 
             self.static_mask, self.moving_mask = None, None
@@ -616,7 +608,7 @@ class MutualInformationMetric(object):
                 self.samples_prealigned = self.samples
             else:
                 self.samples_prealigned = \
-                    self.starting_affine.dot(self.samples.T).T
+                        self.starting_affine.dot(self.samples.T).T
             # Sample the static image
             static_p = self.static_world2grid.dot(self.samples.T).T
             static_p = static_p[..., :self.dim]
@@ -1212,9 +1204,7 @@ class AffineRegistration(object):
             self.params0 = self.transform.get_identity_parameters()
 
         affine_map.set_affine(self.starting_affine)
-        if ret_metric:
-            return affine_map, opt.xopt, opt.fopt
-        return affine_map
+        return (affine_map, opt.xopt, opt.fopt) if ret_metric else affine_map
 
 
 def transform_centers_of_mass(static, static_grid2world,
@@ -1251,10 +1241,13 @@ def transform_centers_of_mass(static, static_grid2world,
     c_moving = moving_grid2world.dot(c_moving + (1,))
     transform = np.eye(dim + 1)
     transform[:dim, dim] = (c_moving - c_static)[:dim]
-    affine_map = AffineMap(transform,
-                           static.shape, static_grid2world,
-                           moving.shape, moving_grid2world)
-    return affine_map
+    return AffineMap(
+        transform,
+        static.shape,
+        static_grid2world,
+        moving.shape,
+        moving_grid2world,
+    )
 
 
 def transform_geometric_centers(static, static_grid2world,
@@ -1294,10 +1287,13 @@ def transform_geometric_centers(static, static_grid2world,
     c_moving = moving_grid2world.dot(c_moving + (1,))
     transform = np.eye(dim + 1)
     transform[:dim, dim] = (c_moving - c_static)[:dim]
-    affine_map = AffineMap(transform,
-                           static.shape, static_grid2world,
-                           moving.shape, moving_grid2world)
-    return affine_map
+    return AffineMap(
+        transform,
+        static.shape,
+        static_grid2world,
+        moving.shape,
+        moving_grid2world,
+    )
 
 
 def transform_origins(static, static_grid2world,
@@ -1335,7 +1331,10 @@ def transform_origins(static, static_grid2world,
     c_moving = moving_grid2world[:dim, dim]
     transform = np.eye(dim + 1)
     transform[:dim, dim] = (c_moving - c_static)[:dim]
-    affine_map = AffineMap(transform,
-                           static.shape, static_grid2world,
-                           moving.shape, moving_grid2world)
-    return affine_map
+    return AffineMap(
+        transform,
+        static.shape,
+        static_grid2world,
+        moving.shape,
+        moving_grid2world,
+    )

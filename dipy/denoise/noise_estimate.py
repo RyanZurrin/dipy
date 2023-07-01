@@ -98,11 +98,7 @@ def piesno(data, N, alpha=0.01, l=100, itermax=100, eps=1e-5,
         e_s = "This function only works on datasets of at least 3 dimensions."
         raise ValueError(e_s)
 
-    if N in opt_quantile:
-        q = opt_quantile[N]
-    else:
-        q = 0.5
-
+    q = opt_quantile[N] if N in opt_quantile else 0.5
     # Initial estimation of sigma
     initial_estimation = (np.percentile(data, q * 100) /
                           np.sqrt(2 * _inv_nchi_cdf(N, 1, q)))
@@ -132,10 +128,7 @@ def piesno(data, N, alpha=0.01, l=100, itermax=100, eps=1e-5,
                                        return_mask=True,
                                        initial_estimation=initial_estimation)
 
-    if return_mask:
-        return sigma, mask_noise
-
-    return sigma
+    return (sigma, mask_noise) if return_mask else sigma
 
 
 def _piesno_3D(data, N, alpha=0.01, l=100, itermax=100, eps=1e-5,
@@ -207,16 +200,8 @@ def _piesno_3D(data, N, alpha=0.01, l=100, itermax=100, eps=1e-5,
     """
 
     if np.all(data == 0):
-        if return_mask:
-            return 0, np.zeros(data.shape[:-1], dtype=bool)
-
-        return 0
-
-    if N in opt_quantile:
-        q = opt_quantile[N]
-    else:
-        q = 0.5
-
+        return (0, np.zeros(data.shape[:-1], dtype=bool)) if return_mask else 0
+    q = opt_quantile[N] if N in opt_quantile else 0.5
     denom = np.sqrt(2 * _inv_nchi_cdf(N, 1, q))
 
     if initial_estimation is None:
@@ -246,7 +231,7 @@ def _piesno_3D(data, N, alpha=0.01, l=100, itermax=100, eps=1e-5,
             sigma = sigma_init
             prev_idx = found_idx
 
-    for n in range(itermax):
+    for _ in range(itermax):
         if np.abs(sigma - sigma_prev) < eps:
             break
 
@@ -263,10 +248,7 @@ def _piesno_3D(data, N, alpha=0.01, l=100, itermax=100, eps=1e-5,
         # Numpy percentile must range in 0 to 100, hence q*100
         sigma = np.percentile(omega, q * 100) / denom
 
-    if return_mask:
-        return sigma, mask
-
-    return sigma
+    return (sigma, mask) if return_mask else sigma
 
 
 def estimate_sigma(arr, disable_background_masking=False, N=0):

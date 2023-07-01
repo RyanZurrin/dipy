@@ -41,7 +41,7 @@ def stamped_pyx_ok(exts, hash_stamp_fname):
             if ext not in ('.pyx', '.py'):
                 continue
             source_hash = sha1(open(source, 'rb').read()).hexdigest()
-            c_fname = base + '.c'
+            c_fname = f'{base}.c'
             try:
                 c_file = open(c_fname, 'rb')
             except IOError:
@@ -62,11 +62,11 @@ def stamped_pyx_ok(exts, hash_stamp_fname):
             return False
         # Compare path made canonical for \/
         fname = fname.replace(filesep, '/')
-        if not stamps[hash].replace(filesep, '/') == fname:
+        if stamps[hash].replace(filesep, '/') != fname:
             return False
         stamps.pop(hash)
     # All good if we found all hashes we need
-    return len(stamps) == 0
+    return not stamps
 
 
 def cyproc_exts(exts, cython_min_version,
@@ -104,7 +104,7 @@ def cyproc_exts(exts, cython_min_version,
             for source in mod.sources:
                 base, ext = splitext(source)
                 if ext in ('.pyx', '.py'):
-                    sources.append(base + '.c')
+                    sources.append(f'{base}.c')
                 else:
                     sources.append(source)
             mod.sources = sources
@@ -146,15 +146,15 @@ def build_stamp(pyxes, include_dirs=()):
     pyx_defs = {}
     from Cython.Compiler.Main import compile
     from Cython.Compiler.CmdLine import parse_command_line
-    includes = sum([['--include-dir', d] for d in include_dirs], [])
+    includes = sum((['--include-dir', d] for d in include_dirs), [])
     for source in pyxes:
         base, ext = splitext(source)
         pyx_hash = sha1((open(source, 'rt').read().encode())).hexdigest()
-        c_filename = base + '.c'
+        c_filename = f'{base}.c'
         options, sources = parse_command_line(['-3'] + includes + [source])
         result = compile(sources, options)
         if result.num_errors > 0:
-            raise RuntimeError('Cython failed to compile ' + source)
+            raise RuntimeError(f'Cython failed to compile {source}')
         c_hash = sha1(open(c_filename, 'rt').read().encode()).hexdigest()
         pyx_defs[source] = dict(pyx_hash=pyx_hash,
                                 c_filename=c_filename,

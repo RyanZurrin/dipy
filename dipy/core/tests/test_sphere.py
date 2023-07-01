@@ -68,7 +68,7 @@ def test_sphere_construct():
 
 
 def array_to_set(a):
-    return set(frozenset(i) for i in a)
+    return {frozenset(i) for i in a}
 
 
 def test_unique_edges():

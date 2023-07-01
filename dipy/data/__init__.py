@@ -190,7 +190,7 @@ def get_sphere(name='symmetric362'):
     """
     fname = SPHERE_FILES.get(name)
     if fname is None:
-        raise DataError('No sphere called "%s"' % name)
+        raise DataError(f'No sphere called "{name}"')
     res = np.load(fname)
     # Set to native byte order to avoid errors in compiled routines for
     # big-endian platforms, when using these spheres.
@@ -348,19 +348,18 @@ def load_sdp_constraints(model_name, order=None):
 
     """
 
-    file = model_name + '_constraint'
+    file = f'{model_name}_constraint'
     if order is not None:
-        file += '_' + str(order)
+        file += f'_{str(order)}'
     file += '.npz'
     path = pjoin(DATA_DIR, file)
 
     if not exists(path):
-        raise ValueError("Constraints file '" + file + "' not found.")
+        raise ValueError(f"Constraints file '{file}' not found.")
 
     try:
         array = load_npz(path)
         n, x = array.shape
-        sdp_constraints = [array[i*x:(i+1)*x] for i in range(n//x)]
-        return sdp_constraints
+        return [array[i*x:(i+1)*x] for i in range(n//x)]
     except Exception:
-        raise ValueError("Failed to read constraints file '" + file + "'.")
+        raise ValueError(f"Failed to read constraints file '{file}'.")

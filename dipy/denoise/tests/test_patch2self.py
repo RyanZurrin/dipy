@@ -119,12 +119,11 @@ def rfiw_phantom(gtab, snr=None):
         dwi[slice_ind == i, :] = sig
     if snr is None:
         return dwi
-    else:
-        sigma = S2 * 1.0 / snr
-        n1 = np.random.normal(0, sigma, size=dwi.shape)
-        n2 = np.random.normal(0, sigma, size=dwi.shape)
-        return [np.sqrt((dwi / np.sqrt(2) + n1)**2 +
-                        (dwi / np.sqrt(2) + n2)**2), sigma]
+    sigma = S2 * 1.0 / snr
+    n1 = np.random.normal(0, sigma, size=dwi.shape)
+    n2 = np.random.normal(0, sigma, size=dwi.shape)
+    return [np.sqrt((dwi / np.sqrt(2) + n1)**2 +
+                    (dwi / np.sqrt(2) + n2)**2), sigma]
 
 
 @needs_sklearn

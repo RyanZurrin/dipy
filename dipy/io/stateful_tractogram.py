@@ -192,32 +192,30 @@ class StatefulTractogram(object):
             X being the number of streamlines
         -----
         """
-        new_sft = StatefulTractogram(streamlines,
-                                     sft.space_attributes,
-                                     sft.space,
-                                     origin=sft.origin,
-                                     data_per_point=data_per_point,
-                                     data_per_streamline=data_per_streamline)
-        return new_sft
+        return StatefulTractogram(
+            streamlines,
+            sft.space_attributes,
+            sft.space,
+            origin=sft.origin,
+            data_per_point=data_per_point,
+            data_per_streamline=data_per_streamline,
+        )
 
     def __str__(self):
         """ Generate the string for printing """
         text = 'Affine: \n{}'.format(
             np.array2string(self._affine,
                             formatter={'float_kind': lambda x: "%.6f" % x}))
-        text += '\ndimensions: {}'.format(
-            np.array2string(self._dimensions))
+        text += f'\ndimensions: {np.array2string(self._dimensions)}'
         text += '\nvoxel_sizes: {}'.format(
             np.array2string(self._voxel_sizes,
                             formatter={'float_kind': lambda x: "%.2f" % x}))
-        text += '\nvoxel_order: {}'.format(self._voxel_order)
+        text += f'\nvoxel_order: {self._voxel_order}'
 
-        text += '\nstreamline_count: {}'.format(self._get_streamline_count())
-        text += '\npoint_count: {}'.format(self._get_point_count())
-        text += '\ndata_per_streamline keys: {}'.format(
-            self.get_data_per_streamline_keys())
-        text += '\ndata_per_point keys: {}'.format(
-            self.get_data_per_point_keys())
+        text += f'\nstreamline_count: {self._get_streamline_count()}'
+        text += f'\npoint_count: {self._get_point_count()}'
+        text += f'\ndata_per_streamline keys: {self.get_data_per_streamline_keys()}'
+        text += f'\ndata_per_point keys: {self.get_data_per_point_keys()}'
 
         return text
 
@@ -257,10 +255,7 @@ class StatefulTractogram(object):
             dps_equal = dps_equal and np.allclose(
                 self.data_per_streamline[key],
                 other.data_per_streamline[key])
-        if not dps_equal:
-            return False
-
-        return True
+        return bool(dps_equal)
 
     def __ne__(self, other):
         """ Robust StatefulTractogram equality test (NOT) """
@@ -543,11 +538,10 @@ class StatefulTractogram(object):
         ic_offsets_indices = np.where(np.logical_or(min_condition,
                                                     max_condition))[0]
 
-        indices_to_remove = []
-        for i in ic_offsets_indices:
-            indices_to_remove.append(bisect(
-                self._tractogram.streamlines._offsets, i) - 1)
-
+        indices_to_remove = [
+            bisect(self._tractogram.streamlines._offsets, i) - 1
+            for i in ic_offsets_indices
+        ]
         indices_to_remove = sorted(set(indices_to_remove))
 
         indices_to_keep = list(
@@ -704,15 +698,12 @@ def _is_data_per_point_valid(streamlines, data):
         total_point += len(i)
 
     for key in data.keys():
-        total_point_entries = 0
-        if not len(data[key]) == total_streamline:
+        if len(data[key]) != total_streamline:
             logger.error('Missing entry for streamlines points data, '
                          'inconsistent number of streamlines.')
             return False
 
-        for values in data[key]:
-            total_point_entries += len(values)
-
+        total_point_entries = sum(len(values) for values in data[key])
         if total_point_entries != total_point:
             logger.error('Missing entry for streamlines points data, '
                          'inconsistent number of points per streamlines.')
@@ -743,12 +734,9 @@ def _is_data_per_streamline_valid(streamlines, data):
     elif data == {}:
         return True
 
-    total_streamline = 0
-    for _ in streamlines:
-        total_streamline += 1
-
+    total_streamline = sum(1 for _ in streamlines)
     for key in data.keys():
-        if not len(data[key]) == total_streamline:
+        if len(data[key]) != total_streamline:
             logger.error('Missing entry for streamlines points data, '
                          'inconsistent number of streamlines.')
             return False

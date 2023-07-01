@@ -100,9 +100,7 @@ def test_cubic_spline_derivative():
     #            22(1), 120-8, 2003.
     in_list = []
     for epsilon in [-1e-9, 0.0, 1e-9]:
-        for t in [-2.0, -1.0, 0.0, 1.0, 2.0]:
-            x = t + epsilon
-            in_list.append(x)
+        in_list.extend(t + epsilon for t in [-2.0, -1.0, 0.0, 1.0, 2.0])
     h = 1e-6
     in_list = np.array(in_list)
     input_h = in_list + h
@@ -114,13 +112,13 @@ def test_cubic_spline_derivative():
 
 
 def test_parzen_joint_histogram():
+    fact = 1
     # Test the simple functionality of ParzenJointHistogram,
     # the gradients and computation of the joint intensity distribution
     # will be tested independently
     for nbins in [15, 30, 50]:
         for min_int in [-10.0, 0.0, 10.0]:
             for intensity_range in [0.1, 1.0, 10.0]:
-                fact = 1
                 max_int = min_int + intensity_range
                 P = ParzenJointHistogram(nbins)
                 # Make a pair of 4-pixel images, introduce +/- 1 values
@@ -183,13 +181,8 @@ def test_parzen_densities():
     nvals = 50
 
     for dim in [2, 3]:
-        if dim == 2:
-            shape = (nr, nc)
-            static, moving = create_random_image_pair(shape, nvals, seed)
-        else:
-            shape = (ns, nr, nc)
-            static, moving = create_random_image_pair(shape, nvals, seed)
-
+        shape = (nr, nc) if dim == 2 else (ns, nr, nc)
+        static, moving = create_random_image_pair(shape, nvals, seed)
         # Initialize
         parzen_hist = ParzenJointHistogram(nbins)
         parzen_hist.setup(static, moving)
@@ -414,6 +407,10 @@ def test_joint_pdf_gradients_dense():
 def test_joint_pdf_gradients_sparse():
     h = 1e-4
 
+    # Sample the fixed-image domain
+    k = 3
+    sigma = 0.25
+    seed = 1234
     # Make sure dictionary entries are processed in the same order regardless
     # of the platform. Otherwise any random numbers drawn within the loop
     # would make the test non-deterministic even if we fix the seed before
@@ -438,10 +435,6 @@ def test_joint_pdf_gradients_sparse():
         parzen_hist = ParzenJointHistogram(32)
         parzen_hist.setup(static, moving, smask, mmask)
 
-        # Sample the fixed-image domain
-        k = 3
-        sigma = 0.25
-        seed = 1234
         shape = np.array(static.shape, dtype=np.int32)
         samples = sample_domain_regular(k, shape, static_g2w, sigma, seed)
         samples = np.array(samples)

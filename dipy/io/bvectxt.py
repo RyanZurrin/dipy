@@ -30,13 +30,13 @@ def read_bvec_file(filename, atol=.001):
 
     base, ext = splitext(filename)
     if ext == '':
-        bvec = base+'.bvec'
-        bval = base+'.bval'
+        bvec = f'{base}.bvec'
+        bval = f'{base}.bval'
     elif ext == '.bvec':
         bvec = filename
-        bval = base+'.bval'
+        bval = f'{base}.bval'
     elif ext == '.bval':
-        bvec = base+'.bvec'
+        bvec = f'{base}.bvec'
         bval = filename
     else:
         raise ValueError('filename must have .bvec or .bval extension')

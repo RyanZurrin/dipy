@@ -2798,10 +2798,7 @@ def sparse_gradient(img, img_world2grid, img_spacing, sample_points):
     out = np.empty(shape=(n, dim), dtype=ftype)
     inside = np.empty(shape=(n,), dtype=np.int32)
     # Select joint density gradient 2D or 3D
-    if dim == 2:
-        jd_grad = _sparse_gradient_2d
-    else:
-        jd_grad = _sparse_gradient_3d
+    jd_grad = _sparse_gradient_2d if dim == 2 else _sparse_gradient_3d
     if img_world2grid.dtype != np.float64:
         img_world2grid = img_world2grid.astype(np.float64)
     if img_spacing.dtype != np.float64:

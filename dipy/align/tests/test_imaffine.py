@@ -185,10 +185,7 @@ def test_affreg_all_transforms():
     # entries to prevent future related failures.
     for ttype in sorted(factors):
         dim = ttype[1]
-        if dim == 2:
-            nslices = 1
-        else:
-            nslices = 45
+        nslices = 1 if dim == 2 else 45
         factor = factors[ttype][0]
         sampling_pc = factors[ttype][1]
         trans = regtransforms[ttype]
@@ -253,10 +250,7 @@ def test_affreg_defaults():
     aff_options = ['mass', 'voxel-origin', 'centers', None, np.eye(dim + 1)]
 
     for starting_affine in aff_options:
-        if dim == 2:
-            nslices = 1
-        else:
-            nslices = 45
+        nslices = 1 if dim == 2 else 45
         factor = factors[ttype][0]
         transform = regtransforms[ttype]
         static, moving, static_grid2world, moving_grid2world, smask, mmask, T = \
@@ -312,10 +306,7 @@ def test_mi_gradient():
     for ttype in sorted(factors):
         transform = regtransforms[ttype]
         dim = ttype[1]
-        if dim == 2:
-            nslices = 1
-        else:
-            nslices = 45
+        nslices = 1 if dim == 2 else 45
         factor = factors[ttype][0]
         sampling_proportion = factors[ttype][1]
         theta = factors[ttype][2]

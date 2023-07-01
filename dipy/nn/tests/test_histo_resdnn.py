@@ -64,7 +64,7 @@ def test_predict_shape_and_masking():
     bvals, bvecs = read_bvals_bvecs(bval_fname, bvec_fname)
     gtab = gradient_table(bvals, bvecs)
 
-    mask = np.zeros(data.shape[0:3], dtype=bool)
+    mask = np.zeros(data.shape[:3], dtype=bool)
     mask[38:40, 45:50, 35:40] = 1
 
     results_arr = resdnn_model.predict(data, gtab, mask=mask)
